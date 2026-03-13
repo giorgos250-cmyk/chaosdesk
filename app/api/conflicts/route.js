@@ -48,8 +48,34 @@ function parseJ(text) {
     if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
   }
 
-  if (end !== -1) return JSON.parse(clean.slice(start, end + 1));
-  throw new Error('Could not find end of JSON');
+  const slice = end !== -1 ? clean.slice(start, end + 1) : clean.slice(start);
+
+  // Try direct parse first
+  try { return JSON.parse(slice); } catch (_) {}
+
+  // Recovery: strip trailing incomplete field, then close open structures
+  let attempt = slice
+    .replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, '')  // incomplete string value
+    .replace(/,\s*"[^"]*"\s*:\s*[^,}\]]*$/, '') // incomplete non-string value
+    .replace(/,\s*"[^"]*$/, '');                 // incomplete key
+
+  // Close any open arrays/objects
+  const opens = [];
+  inStr = false; esc = false;
+  for (const ch of attempt) {
+    if (esc) { esc = false; continue; }
+    if (ch === '\\' && inStr) { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === '{') opens.push('}');
+    else if (ch === '[') opens.push(']');
+    else if (ch === '}' || ch === ']') opens.pop();
+  }
+  attempt += opens.reverse().join('');
+
+  try { return JSON.parse(attempt); } catch (e) {
+    throw new Error(`JSON parse failed: ${e.message}`);
+  }
 }
 
 async function callPerplexity(systemPrompt, userMsg, maxTokens = 2000) {

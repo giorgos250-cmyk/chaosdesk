@@ -242,6 +242,7 @@ function CardContent({ conflict, dark = false }) {
       <h2 style={{
         fontFamily: "'Bebas Neue',sans-serif", fontSize: 40, letterSpacing: '0.1em',
         color: txt, margin: '0 0 6px 0', lineHeight: 1.05,
+        wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>{conflict.name}</h2>
 
       {/* Badges */}
@@ -266,12 +267,14 @@ function CardContent({ conflict, dark = false }) {
       {/* Meme title */}
       <div style={{
         fontFamily: "'VT323',monospace", fontSize: 17, color: cfg.color, marginBottom: 14,
+        wordBreak: 'break-word',
       }}>{'// '}{conflict.meme_title}</div>
 
       {/* TLDR */}
       <p style={{
         fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid,
         lineHeight: 1.75, margin: '0 0 20px 0',
+        wordBreak: 'break-word',
       }}>{conflict.tldr}</p>
 
       {/* Vibe */}
@@ -483,8 +486,8 @@ function OverlayWindow({ conflict, onClose }) {
     <div style={{
       position: 'absolute', top: '50%', left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: 'min(92%, 520px)', maxHeight: '82vh',
-      overflowY: 'auto', zIndex: 500,
+      width: 'min(92vw, 520px)', maxHeight: '82vh',
+      overflowY: 'auto', overflowX: 'hidden', zIndex: 500,
       animation: 'windowIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
     }}>
       <Comp conflict={conflict} onClose={onClose}>
