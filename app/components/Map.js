@@ -2,6 +2,17 @@
 import { useEffect, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return mobile;
+}
+
 /* ═══════════════════════════════════════════════════════
    CHAOSDESK v4.1 — Light theme + Among Us dynamics
    Crew figures, SUS badges, Emergency Meeting headers
@@ -263,6 +274,7 @@ function SectionHead({ text, color }) {
    CARD CONTENT
    ═══════════════════════════════════════════ */
 function CardContent({ conflict, dark = false, onIntel }) {
+  const mobile = useIsMobile();
   const cfg = INTENSITY[conflict.intensity] || INTENSITY.low;
   const txt = dark ? C.darkText : C.ink;
   const txtMid = dark ? C.darkTextDim : C.inkMid;
@@ -290,7 +302,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
     <div>
       {/* Title */}
       <h2 style={{
-        fontFamily: "'Bebas Neue',sans-serif", fontSize: 44, letterSpacing: '0.08em',
+        fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(28px, 7vw, 44px)', letterSpacing: '0.08em',
         color: txt, margin: '0 0 8px 0', lineHeight: 1.05,
         wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>{conflict.name}</h2>
@@ -315,13 +327,13 @@ function CardContent({ conflict, dark = false, onIntel }) {
 
       {/* Meme title */}
       <div style={{
-        fontFamily: "'VT323',monospace", fontSize: 22, color: cfg.color,
+        fontFamily: "'VT323',monospace", fontSize: 'clamp(16px, 4vw, 22px)', color: cfg.color,
         marginBottom: 16, lineHeight: 1.2, wordBreak: 'break-word',
       }}>{'// '}{conflict.meme_title}</div>
 
       {/* TLDR */}
       <p style={{
-        fontFamily: "'IBM Plex Mono',monospace", fontSize: 16, color: txtMid,
+        fontFamily: "'IBM Plex Mono',monospace", fontSize: 'clamp(14px, 3.5vw, 16px)', color: txtMid,
         lineHeight: 1.8, margin: '0 0 22px 0', wordBreak: 'break-word',
       }}>{conflict.tldr}</p>
 
@@ -371,15 +383,15 @@ function CardContent({ conflict, dark = false, onIntel }) {
         </div>
       )}
 
-      {/* DATA — 2 col */}
+      {/* DATA — responsive grid */}
       {conflict.data_points && Object.keys(conflict.data_points).length > 0 && (
         <div style={{ marginBottom: 28 }}>
           <SectionHead text="INTEL DATA" color={cfg.color} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
             {Object.entries(conflict.data_points).map(([k, v]) => (
               <div key={k} style={{ padding: '12px 16px', background: surfaceC, border: `1px solid ${borderC}`, borderRadius: 4 }}>
                 <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, letterSpacing: '0.12em', color: txtFaint, textTransform: 'uppercase', marginBottom: 4 }}>{k}</div>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: cfg.color }}>{v}</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(20px, 5vw, 28px)', color: cfg.color }}>{v}</div>
               </div>
             ))}
           </div>
@@ -407,16 +419,16 @@ function CardContent({ conflict, dark = false, onIntel }) {
         <div style={{ marginBottom: 28 }}>
           <SectionHead text="HOT TAKE" color={cfg.color} />
           <div style={{ padding: '18px 20px', background: `${cfg.color}08`, borderLeft: `4px solid ${cfg.color}`, borderRadius: '0 6px 6px 0' }}>
-            <p style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 16, color: txt, lineHeight: 1.7, margin: 0, wordBreak: 'break-word' }}>{conflict.hot_take}</p>
+            <p style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 'clamp(14px, 3.5vw, 16px)', color: txt, lineHeight: 1.7, margin: 0, wordBreak: 'break-word' }}>{conflict.hot_take}</p>
           </div>
         </div>
       )}
 
-      {/* ROASTS — 2 col with crew figures */}
+      {/* ROASTS — responsive grid with crew figures */}
       {conflict.sides_roasted && Object.keys(conflict.sides_roasted).length > 0 && (
         <div style={{ marginBottom: 28 }}>
           <SectionHead text="EQUAL OPPORTUNITY ROAST" color={cfg.color} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
             {Object.entries(conflict.sides_roasted).map(([side, roast], i) => {
               const colors = [C.critical, C.high, C.low, C.medium, C.accent, '#9c27b0', '#ff9100'];
               const sc = colors[i % colors.length];
@@ -482,17 +494,25 @@ function CardContent({ conflict, dark = false, onIntel }) {
    OVERLAY WINDOW
    ═══════════════════════════════════════════ */
 function OverlayWindow({ conflict, onClose, onIntel }) {
+  const mobile = useIsMobile();
   const cfg = INTENSITY[conflict.intensity] || INTENSITY.low;
   const Comp = WINDOWS[cfg.windowStyle] || ClipboardWindow;
   const isDark = cfg.windowStyle === 'blackboard';
+  const mobileStyle = {
+    position: 'fixed', inset: 0,
+    width: '100%', maxHeight: '100vh',
+    overflowY: 'auto', zIndex: 500,
+    animation: 'windowIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+  };
+  const desktopStyle = {
+    position: 'absolute', top: '50%', left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 'min(92%, 540px)', maxHeight: '84vh',
+    overflowY: 'auto', zIndex: 500,
+    animation: 'windowIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+  };
   return (
-    <div style={{
-      position: 'absolute', top: '50%', left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: 'min(92%, 540px)', maxHeight: '84vh',
-      overflowY: 'auto', zIndex: 500,
-      animation: 'windowIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-    }}>
+    <div style={mobile ? mobileStyle : desktopStyle}>
       <Comp conflict={conflict} onClose={onClose}>
         <CardContent conflict={conflict} dark={isDark} onIntel={onIntel} />
       </Comp>
@@ -504,14 +524,18 @@ function OverlayWindow({ conflict, onClose, onIntel }) {
    COLLAPSIBLE INDEX SIDEBAR
    ═══════════════════════════════════════════ */
 function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onToggle }) {
+  const mobile = useIsMobile();
+  const sidebarWidth = mobile ? '100%' : 264;
+  const toggleLeft = isOpen ? (mobile ? 'calc(100% - 52px)' : 268) : 16;
   return (
     <>
       <button onClick={onToggle} style={{
-        position: 'absolute', top: 16, left: isOpen ? 268 : 16,
+        position: 'absolute', top: 16, left: toggleLeft,
         zIndex: 600, background: C.surface,
         border: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         color: C.ink, fontFamily: "'Bebas Neue',sans-serif",
-        fontSize: 14, letterSpacing: '0.12em', padding: '8px 14px',
+        fontSize: mobile ? 15 : 14, letterSpacing: '0.12em',
+        padding: mobile ? '10px 18px' : '8px 14px',
         cursor: 'pointer', borderRadius: 4,
         transition: 'left 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         display: 'flex', alignItems: 'center', gap: 6,
@@ -522,7 +546,7 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
 
       <div style={{
         position: 'absolute', top: 0, left: 0, bottom: 0,
-        width: 264, background: C.surface, borderRight: `1px solid ${C.border}`,
+        width: sidebarWidth, background: C.surface, borderRight: `1px solid ${C.border}`,
         boxShadow: '4px 0 20px rgba(0,0,0,0.08)', zIndex: 550,
         transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -568,13 +592,16 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
    MAIN MAP COMPONENT
    ═══════════════════════════════════════════ */
 export default function MapView({ conflicts, vibeCheck, onIntel }) {
+  const mobile = useIsMobile();
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const mapLoadedRef = useRef(false);
   const markersRef = useRef([]);
   const conflictsRef = useRef(conflicts);
   const mlRef = useRef(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
   const [activeConflict, setActiveConflict] = useState(null);
 
   // Keep ref in sync with prop
@@ -695,10 +722,16 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
         display: 'flex', justifyContent: 'center', gap: 20,
         fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: C.inkLight, zIndex: 50,
       }}>
-        {Object.entries(INTENSITY).map(([key, icfg]) => (
-          <span key={key}><span style={{ color: icfg.color }}>●</span> {conflicts?.filter(c => c.intensity === key).length || 0} {icfg.label}</span>
-        ))}
-        <span style={{ color: C.accent }}>● LIVE</span>
+        {mobile ? (
+          <span><span style={{ color: C.accent }}>●</span> {conflicts?.length || 0} CONFLICTS · LIVE</span>
+        ) : (
+          <>
+            {Object.entries(INTENSITY).map(([key, icfg]) => (
+              <span key={key}><span style={{ color: icfg.color }}>●</span> {conflicts?.filter(c => c.intensity === key).length || 0} {icfg.label}</span>
+            ))}
+            <span style={{ color: C.accent }}>● LIVE</span>
+          </>
+        )}
       </div>
     </div>
   );
