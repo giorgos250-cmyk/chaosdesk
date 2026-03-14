@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 /* ═══════════════════════════════════════════════════════
-   CHAOSDESK v4 — Light theme, overlay windows on map
-   Different window chrome per intensity level
+   CHAOSDESK v4.1 — Light theme + Among Us dynamics
+   Crew figures, SUS badges, Emergency Meeting headers
+   Bigger fonts, 2-col max, word-break, RAW INTEL
    ═══════════════════════════════════════════════════════ */
 
 const C = {
@@ -12,7 +13,7 @@ const C = {
   surface: '#f2efe9', surfaceHover: '#eae6df',
   mapBg: '#cec9c0', mapGrid: '#b8b3a9', mapLand: '#d8d4cb',
   critical: '#d4163c', high: '#c94600', medium: '#8a7000', low: '#0077a8',
-  accent: '#1a8a3e',
+  accent: '#1a8a3e', sus: '#d4163c',
   ink: '#1c1a17', inkMid: '#3d3a35', inkLight: '#6b6660', inkFaint: '#9e9890',
   border: '#c4bfb6', borderDark: '#a8a39a',
   darkPanel: '#1c1a17', darkText: '#e8e4dd', darkTextDim: '#e8e4dd88',
@@ -29,6 +30,33 @@ const STATUS = {
   active_combat: 'ACTIVE COMBAT', escalating: 'ESCALATING',
   ceasefire: 'CEASEFIRE', negotiations: 'NEGOTIATIONS', frozen: 'FROZEN',
 };
+
+/* ─── Crew Figure SVG ─── */
+function CrewFigure({ color = '#d4163c', size = 26 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" style={{ flexShrink: 0 }}>
+      <rect x="8" y="12" width="24" height="22" rx="8" fill={color} />
+      <ellipse cx="20" cy="14" rx="12" ry="10" fill={color} />
+      <ellipse cx="24" cy="13" rx="7" ry="5" fill="#a8e6ff" opacity="0.85" />
+      <ellipse cx="25" cy="12" rx="3" ry="2" fill="#fff" opacity="0.35" />
+      <rect x="2" y="16" width="7" height="14" rx="3.5" fill={color} opacity="0.75" />
+      <rect x="17" y="30" width="6" height="8" fill={C.surface} />
+    </svg>
+  );
+}
+
+/* ─── SUS Badge ─── */
+function SusBadge() {
+  return (
+    <span style={{
+      display: 'inline-block', padding: '2px 8px',
+      background: `${C.sus}12`, border: `2px solid ${C.sus}`,
+      borderRadius: 3, fontFamily: "'Bebas Neue',sans-serif",
+      fontSize: 13, letterSpacing: '0.15em', color: C.sus,
+      transform: 'rotate(-2deg)', flexShrink: 0,
+    }}>⚠ SUS</span>
+  );
+}
 
 /* ─── Glitch hook ─── */
 function useGlitch(active = true) {
@@ -50,10 +78,16 @@ function useGlitch(active = true) {
    WINDOW CHROME — 4 styles per intensity
    ═══════════════════════════════════════════ */
 
-/* CRITICAL — Torn urgent dispatch */
+/* CRITICAL — Emergency Meeting with flashing bars */
 function TornWindow({ conflict, onClose, children }) {
   const g = useGlitch(true);
   const cfg = INTENSITY.critical;
+  const [flash, setFlash] = useState(true);
+  useEffect(() => {
+    const iv = setInterval(() => setFlash(f => !f), 600);
+    return () => clearInterval(iv);
+  }, []);
+
   return (
     <div style={{
       background: C.surface,
@@ -63,19 +97,35 @@ function TornWindow({ conflict, onClose, children }) {
       transform: g ? `translate(${(Math.random()-0.5)*3}px, ${(Math.random()-0.5)*2}px)` : 'none',
     }}>
       <div style={{
-        background: cfg.color, padding: '10px 18px',
+        height: 4,
+        background: flash
+          ? 'repeating-linear-gradient(90deg, #fff 0px, #fff 12px, transparent 12px, transparent 24px)'
+          : 'repeating-linear-gradient(90deg, transparent 0px, transparent 12px, #fff 12px, #fff 24px)',
+      }} />
+      <div style={{
+        background: cfg.color, padding: '12px 20px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: '0.15em', color: '#fff' }}>⚠ CRITICAL ALERT</span>
-          <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, color: '#ffffff90' }}>{conflict.id?.toUpperCase()}</span>
+          <span style={{
+            fontFamily: "'Bebas Neue',sans-serif", fontSize: 24,
+            letterSpacing: '0.12em', color: '#fff',
+            textShadow: '2px 2px 0 rgba(0,0,0,0.3)',
+          }}>🚨 EMERGENCY ALERT</span>
         </div>
         <button onClick={onClose} style={{
-          background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
-          fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, letterSpacing: '0.1em',
-          padding: '4px 12px', cursor: 'pointer',
-        }}>CLOSE ✕</button>
+          background: 'rgba(0,0,0,0.25)', border: '2px solid rgba(255,255,255,0.4)',
+          color: '#fff', fontFamily: "'Bebas Neue',sans-serif",
+          fontSize: 15, letterSpacing: '0.1em', borderRadius: 4,
+          padding: '5px 14px', cursor: 'pointer',
+        }}>DISMISS ✕</button>
       </div>
+      <div style={{
+        height: 4,
+        background: !flash
+          ? 'repeating-linear-gradient(90deg, #fff 0px, #fff 12px, transparent 12px, transparent 24px)'
+          : 'repeating-linear-gradient(90deg, transparent 0px, transparent 12px, #fff 12px, #fff 24px)',
+      }} />
       <div style={{
         height: 6,
         background: `linear-gradient(135deg, ${cfg.color} 33.33%, transparent 33.33%) 0 0, linear-gradient(225deg, ${cfg.color} 33.33%, transparent 33.33%) 0 0`,
@@ -86,48 +136,44 @@ function TornWindow({ conflict, onClose, children }) {
         top: `${40 + Math.random() * 50}%`,
         height: 2, background: cfg.color, opacity: 0.4, zIndex: 5,
       }} />}
-      <div style={{ padding: '22px 24px 26px' }}>{children}</div>
+      <div style={{ padding: '24px 26px 28px' }}>{children}</div>
     </div>
   );
 }
 
-/* HIGH — Blackboard / dark contrast panel */
+/* HIGH — Blackboard dark panel */
 function BlackboardWindow({ conflict, onClose, children }) {
   const cfg = INTENSITY.high;
   return (
     <div style={{
       background: C.darkPanel, border: `1px solid ${C.borderDark}`,
-      boxShadow: '0 8px 40px rgba(0,0,0,0.3), 0 2px 0 rgba(255,255,255,0.05) inset',
+      boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
       position: 'relative', overflow: 'hidden',
     }}>
       <div style={{ height: 3, background: cfg.color }} />
       <div style={{
-        padding: '10px 18px', borderBottom: `1px solid ${cfg.color}30`,
+        padding: '12px 20px', borderBottom: `1px solid ${cfg.color}30`,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: "'VT323',monospace", fontSize: 18, color: cfg.color }}>█</span>
-          <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 12, color: C.darkTextDim, letterSpacing: '0.05em' }}>
-            chaosdesk://intel/{conflict.id}
-          </span>
+          <span style={{ fontFamily: "'VT323',monospace", fontSize: 20, color: cfg.color }}>▓</span>
+          <span style={{
+            fontFamily: "'Share Tech Mono',monospace", fontSize: 12,
+            color: C.darkTextDim, letterSpacing: '0.05em',
+          }}>chaosdesk://intel/{conflict.id}</span>
         </div>
         <button onClick={onClose} style={{
           background: 'none', border: `1px solid ${cfg.color}40`, color: cfg.color,
-          fontFamily: "'VT323',monospace", fontSize: 16, padding: '2px 10px', cursor: 'pointer',
+          fontFamily: "'VT323',monospace", fontSize: 18, padding: '2px 12px',
+          cursor: 'pointer', borderRadius: 3,
         }}>[×]</button>
       </div>
-      <div style={{
-        padding: '6px 18px', borderBottom: '1px solid #ffffff10',
-        fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: C.darkTextDim,
-      }}>
-        <span style={{ color: cfg.color }}>❯</span> fetch --conflict {conflict.id} --priority high
-      </div>
-      <div style={{ padding: '22px 24px 26px' }}>{children}</div>
+      <div style={{ padding: '24px 26px 28px' }}>{children}</div>
     </div>
   );
 }
 
-/* MEDIUM — Notebook / field notes */
+/* MEDIUM — Notebook ruled paper */
 function NotebookWindow({ conflict, onClose, children }) {
   return (
     <div style={{
@@ -142,26 +188,25 @@ function NotebookWindow({ conflict, onClose, children }) {
         backgroundPosition: '0 56px',
       }} />
       <div style={{
-        padding: '12px 18px 12px 56px', borderBottom: `1px solid ${C.border}`,
+        padding: '14px 20px 14px 56px', borderBottom: `1px solid ${C.border}`,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         position: 'relative', zIndex: 2,
       }}>
-        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 16, letterSpacing: '0.12em', color: C.inkMid }}>
+        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: '0.12em', color: C.inkMid }}>
           FIELD REPORT — {conflict.id?.toUpperCase()}
         </span>
         <button onClick={onClose} style={{
           background: 'none', border: 'none', fontFamily: "'Bebas Neue',sans-serif",
-          fontSize: 18, color: C.inkLight, cursor: 'pointer',
+          fontSize: 20, color: C.inkLight, cursor: 'pointer',
         }}>✕</button>
       </div>
-      <div style={{ padding: '22px 24px 26px 56px', position: 'relative', zIndex: 2 }}>{children}</div>
+      <div style={{ padding: '24px 26px 28px 56px', position: 'relative', zIndex: 2 }}>{children}</div>
     </div>
   );
 }
 
-/* LOW — Clean clipboard */
+/* LOW — Clipboard */
 function ClipboardWindow({ conflict, onClose, children }) {
-  const cfg = INTENSITY.low;
   return (
     <div style={{ position: 'relative' }}>
       <div style={{
@@ -176,185 +221,149 @@ function ClipboardWindow({ conflict, onClose, children }) {
         boxShadow: '0 4px 24px rgba(0,0,0,0.1)', overflow: 'hidden', paddingTop: 8,
       }}>
         <div style={{
-          padding: '10px 18px', borderBottom: `1px solid ${C.border}`,
+          padding: '12px 20px', borderBottom: `1px solid ${C.border}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.color, opacity: 0.7 }} />
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: C.inkMid, letterSpacing: '0.05em' }}>
-              {conflict.id?.toUpperCase()} — {conflict.name}
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.low, opacity: 0.7 }} />
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 13, color: C.inkMid }}>
+              {conflict.name}
             </span>
           </div>
           <button onClick={onClose} style={{
             background: 'none', border: `1px solid ${C.border}`, color: C.inkLight,
-            fontSize: 12, fontFamily: "'IBM Plex Mono',monospace", padding: '3px 10px',
-            cursor: 'pointer', borderRadius: 2,
+            fontSize: 13, fontFamily: "'IBM Plex Mono',monospace", padding: '3px 12px',
+            cursor: 'pointer', borderRadius: 3,
           }}>Close</button>
         </div>
-        <div style={{ padding: '22px 24px 26px' }}>{children}</div>
+        <div style={{ padding: '24px 26px 28px' }}>{children}</div>
       </div>
     </div>
   );
 }
 
-/* ─── Window picker ─── */
 const WINDOWS = { torn: TornWindow, blackboard: BlackboardWindow, notebook: NotebookWindow, clipboard: ClipboardWindow };
 
 /* ═══════════════════════════════════════════
-   CARD CONTENT — shared across window styles
+   SECTION HEAD
    ═══════════════════════════════════════════ */
 function SectionHead({ text, color }) {
   return (
     <div style={{
-      fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, letterSpacing: '0.15em',
-      color, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8,
+      fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: '0.15em',
+      color, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10,
     }}>
-      <span style={{ width: 18, height: 2, background: color, display: 'inline-block' }} />
+      <span style={{ width: 22, height: 3, background: color, borderRadius: 1, display: 'inline-block' }} />
       {text}
     </div>
   );
 }
 
-function CardContent({ conflict, dark = false }) {
+/* ═══════════════════════════════════════════
+   CARD CONTENT
+   ═══════════════════════════════════════════ */
+function CardContent({ conflict, dark = false, onIntel }) {
   const cfg = INTENSITY[conflict.intensity] || INTENSITY.low;
   const txt = dark ? C.darkText : C.ink;
   const txtMid = dark ? C.darkTextDim : C.inkMid;
-  const txtLight = dark ? '#ffffff55' : C.inkLight;
   const txtFaint = dark ? '#ffffff33' : C.inkFaint;
   const borderC = dark ? '#ffffff15' : C.border;
   const surfaceC = dark ? '#ffffff08' : `${C.ink}06`;
 
-  const [memeImg, setMemeImg] = useState(null);
-
-  // Imgflip fetch
+  const [memeImgs, setMemeImgs] = useState({});
   useEffect(() => {
-    const text = conflict.memes?.find(m => m.format === 'meme')?.text || conflict.memes?.[0]?.text;
-    if (!text) return;
-    fetch(`/api/imgflip?id=${encodeURIComponent(conflict.id)}&text=${encodeURIComponent(text)}`)
-      .then(r => r.json())
-      .then(d => { if (d.url) setMemeImg(d.url); })
-      .catch(() => {});
+    if (!conflict.memes?.length) return;
+    conflict.memes.forEach((meme, i) => {
+      const params = new URLSearchParams({
+        id: conflict.id || '', text: meme.text || '',
+        format: meme.format || '',
+        text_top: meme.text_top || '', text_bottom: meme.text_bottom || '',
+      });
+      fetch(`/api/imgflip?${params}`)
+        .then(r => r.json())
+        .then(d => { if (d.url) setMemeImgs(prev => ({ ...prev, [i]: d.url })); })
+        .catch(() => {});
+    });
   }, [conflict.id]);
 
   return (
     <div>
       {/* Title */}
       <h2 style={{
-        fontFamily: "'Bebas Neue',sans-serif", fontSize: 40, letterSpacing: '0.1em',
-        color: txt, margin: '0 0 6px 0', lineHeight: 1.05,
+        fontFamily: "'Bebas Neue',sans-serif", fontSize: 44, letterSpacing: '0.08em',
+        color: txt, margin: '0 0 8px 0', lineHeight: 1.05,
         wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>{conflict.name}</h2>
 
       {/* Badges */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
         <span style={{
-          padding: '3px 12px', background: `${cfg.color}15`, border: `1.5px solid ${cfg.color}80`,
-          fontFamily: "'Share Tech Mono',monospace", fontSize: 11, letterSpacing: '0.1em', color: cfg.color,
+          padding: '4px 14px', background: `${cfg.color}12`,
+          border: `2px solid ${cfg.color}`, borderRadius: 4,
+          fontFamily: "'Bebas Neue',sans-serif", fontSize: 15,
+          letterSpacing: '0.12em', color: cfg.color,
           display: 'inline-flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: cfg.color, boxShadow: `0 0 6px ${cfg.color}60` }} />
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.color, boxShadow: `0 0 6px ${cfg.color}60` }} />
           {cfg.label}
         </span>
         <span style={{
-          padding: '3px 10px', border: `1px solid ${borderC}`,
-          fontFamily: "'Share Tech Mono',monospace", fontSize: 10, letterSpacing: '0.08em', color: txtLight,
+          padding: '4px 12px', border: `1px solid ${borderC}`, borderRadius: 3,
+          fontFamily: "'Share Tech Mono',monospace", fontSize: 12, color: dark ? '#ffffff55' : C.inkLight,
         }}>{STATUS[conflict.status] || conflict.status?.toUpperCase()}</span>
-        <span style={{
-          fontFamily: "'Share Tech Mono',monospace", fontSize: 10, letterSpacing: '0.08em', color: txtFaint,
-        }}>{conflict.region?.toUpperCase()}</span>
       </div>
 
       {/* Meme title */}
       <div style={{
-        fontFamily: "'VT323',monospace", fontSize: 17, color: cfg.color, marginBottom: 14,
-        wordBreak: 'break-word',
+        fontFamily: "'VT323',monospace", fontSize: 22, color: cfg.color,
+        marginBottom: 16, lineHeight: 1.2, wordBreak: 'break-word',
       }}>{'// '}{conflict.meme_title}</div>
 
       {/* TLDR */}
       <p style={{
-        fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid,
-        lineHeight: 1.75, margin: '0 0 20px 0',
-        wordBreak: 'break-word',
+        fontFamily: "'IBM Plex Mono',monospace", fontSize: 16, color: txtMid,
+        lineHeight: 1.8, margin: '0 0 22px 0', wordBreak: 'break-word',
       }}>{conflict.tldr}</p>
 
       {/* Vibe */}
       <div style={{
-        padding: '12px 16px', background: surfaceC, borderLeft: `3px solid ${cfg.color}`,
-        marginBottom: 24, fontFamily: "'VT323',monospace", fontSize: 18, color: txt, lineHeight: 1.5,
+        padding: '14px 18px', background: surfaceC,
+        borderLeft: `4px solid ${cfg.color}`, borderRadius: '0 6px 6px 0',
+        marginBottom: 28, fontFamily: "'VT323',monospace",
+        fontSize: 22, color: txt, lineHeight: 1.4,
       }}>{conflict.vibe}</div>
 
-      {/* ── MEME INTEL section ── */}
-      {(conflict.memes?.length > 0 || memeImg) && (
-        <div style={{ marginBottom: 24 }}>
+      {/* MEME INTEL */}
+      {conflict.memes?.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
           <SectionHead text="MEME INTEL" color={cfg.color} />
-          {/* Imgflip generated image */}
-          {memeImg && (
-            <a href={memeImg} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: 12 }}>
-              <img src={memeImg} alt="meme" style={{
-                width: '100%', display: 'block', border: `1px solid ${borderC}`,
-              }} />
-            </a>
-          )}
-          {/* Meme cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {conflict.memes?.map((meme, i) => (
+            {conflict.memes.map((meme, i) => (
               <div key={i} style={{
-                border: `1px solid ${borderC}`, overflow: 'hidden',
+                border: `1px solid ${borderC}`, borderRadius: 6, overflow: 'hidden',
                 background: dark ? '#ffffff06' : `${C.ink}04`,
               }}>
-                {/* Meme image placeholder */}
-                <div style={{
-                  width: '100%', height: 160,
-                  background: dark
-                    ? `linear-gradient(135deg, #1a1a2e, #16162a)`
-                    : `linear-gradient(135deg, ${C.bgCool}, ${C.bgWarm})`,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  justifyContent: 'center', position: 'relative', overflow: 'hidden',
-                }}>
+                {memeImgs[i] ? (
+                  <a href={memeImgs[i]} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                    <img src={memeImgs[i]} alt={meme.format} style={{ width: '100%', display: 'block' }} />
+                  </a>
+                ) : (
                   <div style={{
-                    fontFamily: "'Bebas Neue',sans-serif", fontSize: 18,
-                    color: dark ? '#fff' : C.ink, textAlign: 'center',
-                    textShadow: dark ? '2px 2px 0 #000, -1px -1px 0 #000' : '1px 1px 0 rgba(255,255,255,0.8)',
-                    letterSpacing: '0.08em', padding: '0 16px', lineHeight: 1.2,
-                    position: 'absolute', top: 14,
-                  }}>{meme.text_top || ''}</div>
-                  <div style={{
-                    padding: '5px 12px', border: `1.5px dashed ${cfg.color}60`,
-                    fontFamily: "'Share Tech Mono',monospace", fontSize: 10,
-                    letterSpacing: '0.1em', color: cfg.color, opacity: 0.7,
-                  }}>[{(meme.format || 'MEME').toUpperCase()}]</div>
-                  <div style={{
-                    fontFamily: "'Bebas Neue',sans-serif", fontSize: 16,
-                    color: dark ? '#fff' : C.ink, textAlign: 'center',
-                    textShadow: dark ? '2px 2px 0 #000, -1px -1px 0 #000' : '1px 1px 0 rgba(255,255,255,0.8)',
-                    letterSpacing: '0.06em', padding: '0 16px', lineHeight: 1.2,
-                    position: 'absolute', bottom: 14,
-                  }}>{meme.text_bottom || ''}</div>
-                  <div style={{
-                    position: 'absolute', bottom: 3, right: 6,
-                    fontFamily: "'Share Tech Mono',monospace", fontSize: 8,
-                    letterSpacing: '0.05em', color: dark ? '#ffffff25' : `${C.ink}25`,
-                  }}>IMGFLIP PENDING</div>
+                    width: '100%', height: 170, padding: '18px 20px',
+                    background: dark ? 'linear-gradient(135deg, #1a1a2e, #16162a)' : `linear-gradient(135deg, ${C.bgCool}, ${C.bgWarm})`,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, color: dark ? '#fff' : C.ink, textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{meme.text_top || ''}</div>
+                    <div style={{ padding: '4px 14px', border: `2px dashed ${cfg.color}50`, borderRadius: 4, fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: cfg.color, opacity: 0.6 }}>[{(meme.format || 'MEME').toUpperCase()}]</div>
+                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: dark ? '#fff' : C.ink, textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{meme.text_bottom || ''}</div>
+                  </div>
+                )}
+                <div style={{ padding: '8px 14px', borderTop: `1px solid ${borderC}`, display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: "'VT323',monospace", fontSize: 16, color: cfg.color }}>{meme.format}</span>
+                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, color: txtFaint }}>via {meme.source || 'unknown'}</span>
                 </div>
-                {/* Source bar */}
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '6px 12px', borderTop: `1px solid ${borderC}`,
-                }}>
-                  <span style={{ fontFamily: "'VT323',monospace", fontSize: 14, color: cfg.color }}>
-                    {meme.format || 'meme'}
-                  </span>
-                  <span style={{
-                    fontFamily: "'Share Tech Mono',monospace", fontSize: 9, letterSpacing: '0.05em', color: txtFaint,
-                  }}>via {meme.source || 'unknown'}</span>
-                </div>
-                {/* Full meme text fallback if no top/bottom */}
                 {!meme.text_top && meme.text && (
-                  <div style={{
-                    padding: '8px 12px', borderTop: `1px solid ${borderC}`,
-                    fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: txtMid,
-                    lineHeight: 1.5, fontStyle: 'italic',
-                  }}>"{meme.text}"</div>
+                  <div style={{ padding: '8px 14px', borderTop: `1px solid ${borderC}`, fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid, fontStyle: 'italic', wordBreak: 'break-word' }}>"{meme.text}"</div>
                 )}
               </div>
             ))}
@@ -362,136 +371,130 @@ function CardContent({ conflict, dark = false }) {
         </div>
       )}
 
-      {/* Data points */}
+      {/* DATA — 2 col */}
       {conflict.data_points && Object.keys(conflict.data_points).length > 0 && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 28 }}>
           <SectionHead text="INTEL DATA" color={cfg.color} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {Object.entries(conflict.data_points).map(([k, v]) => (
-              <div key={k} style={{ padding: '10px 14px', background: surfaceC, border: `1px solid ${borderC}` }}>
-                <div style={{
-                  fontFamily: "'Share Tech Mono',monospace", fontSize: 9, letterSpacing: '0.1em',
-                  color: txtFaint, textTransform: 'uppercase', marginBottom: 4,
-                }}>{k}</div>
-                <div style={{
-                  fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: cfg.color, letterSpacing: '0.04em',
-                }}>{v}</div>
+              <div key={k} style={{ padding: '12px 16px', background: surfaceC, border: `1px solid ${borderC}`, borderRadius: 4 }}>
+                <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, letterSpacing: '0.12em', color: txtFaint, textTransform: 'uppercase', marginBottom: 4 }}>{k}</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: cfg.color }}>{v}</div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Latest updates */}
+      {/* UPDATES */}
       {conflict.latest_updates?.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 28 }}>
           <SectionHead text="LATEST UPDATES" color={cfg.color} />
           {conflict.latest_updates.map((u, i) => (
-            <div key={i} style={{
-              display: 'flex', gap: 14, padding: '12px 0', borderBottom: `1px solid ${borderC}`,
-            }}>
-              <div style={{
-                fontFamily: "'VT323',monospace", fontSize: 16,
-                color: i === 0 ? cfg.color : txtFaint, minWidth: 56, whiteSpace: 'nowrap',
-              }}>{u.date}</div>
-              <div>
-                <div style={{
-                  fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, letterSpacing: '0.04em',
-                  color: txt, marginBottom: 3,
-                }}>{u.headline}</div>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono',monospace", fontSize: 13, color: txtMid, lineHeight: 1.6,
-                }}>{u.detail}</div>
+            <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: `1px solid ${borderC}` }}>
+              <div style={{ fontFamily: "'VT323',monospace", fontSize: 18, color: i === 0 ? cfg.color : txtFaint, minWidth: 58, whiteSpace: 'nowrap' }}>{u.date}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: txt, marginBottom: 4, wordBreak: 'break-word' }}>{u.headline}</div>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid, lineHeight: 1.6, wordBreak: 'break-word' }}>{u.detail}</div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Hot take */}
+      {/* HOT TAKE */}
       {conflict.hot_take && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 28 }}>
           <SectionHead text="HOT TAKE" color={cfg.color} />
-          <div style={{
-            padding: '16px 20px', background: `${cfg.color}08`, borderLeft: `4px solid ${cfg.color}`,
-          }}>
-            <p style={{
-              fontFamily: "'IBM Plex Mono',monospace", fontSize: 15, color: txt,
-              lineHeight: 1.7, margin: 0, fontWeight: 500,
-            }}>{conflict.hot_take}</p>
+          <div style={{ padding: '18px 20px', background: `${cfg.color}08`, borderLeft: `4px solid ${cfg.color}`, borderRadius: '0 6px 6px 0' }}>
+            <p style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 16, color: txt, lineHeight: 1.7, margin: 0, wordBreak: 'break-word' }}>{conflict.hot_take}</p>
           </div>
         </div>
       )}
 
-      {/* Sides roasted */}
+      {/* ROASTS — 2 col with crew figures */}
       {conflict.sides_roasted && Object.keys(conflict.sides_roasted).length > 0 && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 28 }}>
           <SectionHead text="EQUAL OPPORTUNITY ROAST" color={cfg.color} />
-          {Object.entries(conflict.sides_roasted).map(([side, roast], i) => {
-            const sc = [C.critical, C.high, C.low, C.medium, C.accent][i % 5];
-            return (
-              <div key={side} style={{ padding: '12px 0', borderBottom: `1px solid ${borderC}` }}>
-                <div style={{
-                  fontFamily: "'Bebas Neue',sans-serif", fontSize: 16, letterSpacing: '0.1em',
-                  color: sc, marginBottom: 4,
-                }}>▸ {side.toUpperCase()}</div>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono',monospace", fontSize: 13, color: txtMid,
-                  lineHeight: 1.6, paddingLeft: 16,
-                }}>{roast}</div>
-              </div>
-            );
-          })}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {Object.entries(conflict.sides_roasted).map(([side, roast], i) => {
+              const colors = [C.critical, C.high, C.low, C.medium, C.accent, '#9c27b0', '#ff9100'];
+              const sc = colors[i % colors.length];
+              return (
+                <div key={side} style={{
+                  padding: '16px', background: surfaceC,
+                  border: `1px solid ${borderC}`, borderRadius: 6,
+                  borderTop: `3px solid ${sc}`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <CrewFigure color={sc} size={26} />
+                    <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: '0.1em', color: sc }}>{side.toUpperCase()}</span>
+                  </div>
+                  <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid, lineHeight: 1.6, wordBreak: 'break-word' }}>{roast}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* Historical parallel */}
+      {/* HISTORICAL PARALLEL */}
       {conflict.historical_parallel && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 28 }}>
           <SectionHead text="HISTORICAL PARALLEL" color={cfg.color} />
-          <div style={{
-            fontFamily: "'IBM Plex Mono',monospace", fontSize: 13, color: txtMid,
-            lineHeight: 1.6, fontStyle: 'italic',
-          }}>{conflict.historical_parallel}</div>
+          <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 15, color: txtMid, lineHeight: 1.6, fontStyle: 'italic', wordBreak: 'break-word' }}>{conflict.historical_parallel}</div>
         </div>
       )}
 
-      {/* Hypocrisy flags */}
+      {/* SUS METER */}
       {conflict.hypocrisy_flags?.length > 0 && (
-        <div>
-          <SectionHead text="HYPOCRISY FLAGS" color={C.critical} />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ marginBottom: 28 }}>
+          <SectionHead text="SUS METER" color={C.sus} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {conflict.hypocrisy_flags.map((f, i) => (
-              <span key={i} style={{
-                fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: C.critical,
-                padding: '4px 10px', border: `1px solid ${C.critical}40`, background: `${C.critical}08`,
-              }}>⚠ {f}</span>
+              <div key={i} style={{
+                padding: '12px 16px', background: `${C.sus}06`,
+                border: `1px solid ${C.sus}25`, borderRadius: 4,
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <SusBadge />
+                <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: C.sus, lineHeight: 1.4, wordBreak: 'break-word' }}>{f}</span>
+              </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* BUTTONS */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button onClick={() => onIntel && onIntel(conflict.id)} style={{
+          flex: 1, padding: '14px', background: surfaceC,
+          border: `1px solid ${cfg.color}40`, borderRadius: 4,
+          fontFamily: "'Bebas Neue',sans-serif", fontSize: 16,
+          letterSpacing: '0.12em', color: cfg.color, cursor: 'pointer',
+        }}>🔍 RAW INTEL</button>
+      </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════
-   OVERLAY WINDOW — wraps chrome + content
+   OVERLAY WINDOW
    ═══════════════════════════════════════════ */
-function OverlayWindow({ conflict, onClose }) {
+function OverlayWindow({ conflict, onClose, onIntel }) {
   const cfg = INTENSITY[conflict.intensity] || INTENSITY.low;
   const Comp = WINDOWS[cfg.windowStyle] || ClipboardWindow;
   const isDark = cfg.windowStyle === 'blackboard';
-
   return (
     <div style={{
       position: 'absolute', top: '50%', left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: 'min(92vw, 520px)', maxHeight: '82vh',
-      overflowY: 'auto', overflowX: 'hidden', zIndex: 500,
+      width: 'min(92%, 540px)', maxHeight: '84vh',
+      overflowY: 'auto', zIndex: 500,
       animation: 'windowIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
     }}>
       <Comp conflict={conflict} onClose={onClose}>
-        <CardContent conflict={conflict} dark={isDark} />
+        <CardContent conflict={conflict} dark={isDark} onIntel={onIntel} />
       </Comp>
     </div>
   );
@@ -503,26 +506,20 @@ function OverlayWindow({ conflict, onClose }) {
 function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onToggle }) {
   return (
     <>
-      {/* Toggle button */}
       <button onClick={onToggle} style={{
-        position: 'absolute', top: 16,
-        left: isOpen ? 268 : 16,
+        position: 'absolute', top: 16, left: isOpen ? 268 : 16,
         zIndex: 600, background: C.surface,
         border: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         color: C.ink, fontFamily: "'Bebas Neue',sans-serif",
-        fontSize: 13, letterSpacing: '0.12em', padding: '8px 14px', cursor: 'pointer',
+        fontSize: 14, letterSpacing: '0.12em', padding: '8px 14px',
+        cursor: 'pointer', borderRadius: 4,
         transition: 'left 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
-        <span style={{
-          display: 'inline-block',
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.3s',
-        }}>◀</span>
+        <span style={{ display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}>◀</span>
         {isOpen ? '' : 'INDEX'}
       </button>
 
-      {/* Panel */}
       <div style={{
         position: 'absolute', top: 0, left: 0, bottom: 0,
         width: 264, background: C.surface, borderRight: `1px solid ${C.border}`,
@@ -531,68 +528,36 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
         transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         display: 'flex', flexDirection: 'column',
       }}>
-        {/* Header */}
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-          <div style={{
-            fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, letterSpacing: '0.2em', color: C.ink,
-          }}>CHAOSDESK</div>
-          <div style={{
-            fontFamily: "'Share Tech Mono',monospace", fontSize: 10, letterSpacing: '0.1em',
-            color: C.accent, marginTop: 2,
-          }}>{conflicts?.length || 0} ACTIVE CONFLICTS</div>
-          {vibeCheck && (
-            <div style={{
-              fontFamily: "'VT323',monospace", fontSize: 13, color: C.inkLight,
-              marginTop: 6, lineHeight: 1.4,
-            }}>{vibeCheck}</div>
-          )}
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: '0.2em', color: C.ink }}>CHAOSDESK</div>
+          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 11, letterSpacing: '0.1em', color: C.accent, marginTop: 2 }}>{conflicts?.length || 0} ACTIVE CONFLICTS</div>
+          {vibeCheck && <div style={{ fontFamily: "'VT323',monospace", fontSize: 14, color: C.inkLight, marginTop: 6, lineHeight: 1.4 }}>{vibeCheck}</div>}
         </div>
-
-        {/* List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {conflicts?.map((c) => {
-            const cfg = INTENSITY[c.intensity] || INTENSITY.low;
+            const icfg = INTENSITY[c.intensity] || INTENSITY.low;
             const sel = selectedId === c.id;
             return (
               <div key={c.id} onClick={() => onSelect(c)} style={{
                 padding: '14px 20px', cursor: 'pointer',
-                borderLeft: `3px solid ${sel ? cfg.color : 'transparent'}`,
-                background: sel ? `${cfg.color}10` : 'transparent',
+                borderLeft: `3px solid ${sel ? icfg.color : 'transparent'}`,
+                background: sel ? `${icfg.color}10` : 'transparent',
                 borderBottom: `1px solid ${C.border}`,
-                transition: 'all 0.15s',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{
-                    fontFamily: "'Share Tech Mono',monospace", fontSize: 9, color: C.inkFaint, letterSpacing: '0.05em',
-                  }}>{c.id?.toUpperCase()}</span>
-                  <span style={{
-                    fontFamily: "'Share Tech Mono',monospace", fontSize: 9, letterSpacing: '0.08em', color: cfg.color,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                  }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.color }} />
-                    {cfg.label}
+                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 9, color: C.inkFaint }}>{c.id?.toUpperCase()}</span>
+                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, color: icfg.color, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: icfg.color }} />{icfg.label}
                   </span>
                 </div>
-                <div style={{
-                  fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: '0.08em',
-                  color: C.ink, marginBottom: 2, lineHeight: 1.1,
-                }}>{c.name}</div>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: C.inkLight,
-                }}>{c.region}</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{c.name}</div>
+                <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: C.inkLight, marginTop: 2 }}>{c.region}</div>
               </div>
             );
           })}
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '10px 20px', borderTop: `1px solid ${C.border}`,
-          fontFamily: "'Share Tech Mono',monospace", fontSize: 9, color: C.inkFaint, letterSpacing: '0.05em',
-          display: 'flex', justifyContent: 'space-between', flexShrink: 0,
-        }}>
-          <span>SONAR-PRO</span>
-          <span style={{ color: C.accent }}>● LIVE</span>
+        <div style={{ padding: '10px 20px', borderTop: `1px solid ${C.border}`, fontFamily: "'Share Tech Mono',monospace", fontSize: 9, color: C.inkFaint, display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+          <span>SONAR-PRO</span><span style={{ color: C.accent }}>● LIVE</span>
         </div>
       </div>
     </>
@@ -612,83 +577,26 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
   const [activeConflict, setActiveConflict] = useState(null);
 
   useEffect(() => { conflictsRef.current = conflicts; }, [conflicts]);
-
-  useEffect(() => {
-    if (mapRef.current || !mapContainer.current) return;
-    initMap();
-  }, []);
-
-  useEffect(() => {
-    if (mapRef.current?.loaded() && conflicts?.length > 0) {
-      addMarkersToMap(mapRef.current);
-    }
-  }, [conflicts]);
+  useEffect(() => { if (mapRef.current || !mapContainer.current) return; initMap(); }, []);
+  useEffect(() => { if (mapRef.current?.loaded() && conflicts?.length > 0) addMarkersToMap(mapRef.current); }, [conflicts]);
 
   async function initMap() {
     const ml = await import('maplibre-gl');
     mlRef.current = ml.default;
-
     const map = new ml.default.Map({
       container: mapContainer.current,
       style: {
         version: 8,
-        sources: {
-          countries: {
-            type: 'geojson',
-            data: 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-            generateId: true
-          }
-        },
+        sources: { countries: { type: 'geojson', data: 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson', generateId: true } },
         layers: [
-          {
-            id: 'background',
-            type: 'background',
-            paint: { 'background-color': '#cec9c0' }
-          },
-          {
-            id: 'countries-fill',
-            type: 'fill',
-            source: 'countries',
-            paint: {
-              'fill-color': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                '#c4bfb6',
-                '#d8d4cb'
-              ],
-              'fill-opacity': 1
-            }
-          },
-          {
-            id: 'countries-border',
-            type: 'line',
-            source: 'countries',
-            paint: {
-              'line-color': '#a8a39a',
-              'line-width': 0.8,
-              'line-opacity': 1
-            }
-          },
-          {
-            id: 'countries-border-glow',
-            type: 'line',
-            source: 'countries',
-            paint: {
-              'line-color': '#1a8a3e',
-              'line-width': 1.5,
-              'line-opacity': 0.06,
-              'line-blur': 3
-            }
-          }
+          { id: 'background', type: 'background', paint: { 'background-color': '#cec9c0' } },
+          { id: 'countries-fill', type: 'fill', source: 'countries', paint: { 'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#c4bfb6', '#d8d4cb'], 'fill-opacity': 1 } },
+          { id: 'countries-border', type: 'line', source: 'countries', paint: { 'line-color': '#a8a39a', 'line-width': 0.8 } },
+          { id: 'countries-border-glow', type: 'line', source: 'countries', paint: { 'line-color': '#1a8a3e', 'line-width': 1.5, 'line-opacity': 0.06, 'line-blur': 3 } }
         ]
       },
-      center: [20, 15],
-      zoom: 2,
-      minZoom: 1.5,
-      maxZoom: 12,
+      center: [20, 15], zoom: 2, minZoom: 1.5, maxZoom: 12,
     });
-
-    // Hover
     let hoveredId = null;
     map.on('mousemove', 'countries-fill', (e) => {
       if (e.features.length > 0) {
@@ -700,10 +608,8 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
     });
     map.on('mouseleave', 'countries-fill', () => {
       if (hoveredId !== null) map.setFeatureState({ source: 'countries', id: hoveredId }, { hover: false });
-      hoveredId = null;
-      map.getCanvas().style.cursor = '';
+      hoveredId = null; map.getCanvas().style.cursor = '';
     });
-
     map.on('load', () => {
       mapRef.current = map;
       addCountryLabels(map);
@@ -713,154 +619,74 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
 
   function addCountryLabels(map) {
     fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
-      .then(r => r.json())
-      .then(data => {
-        const centroids = {
-          type: 'FeatureCollection',
-          features: data.features.map(f => {
-            try {
-              const coords = f.geometry.type === 'Polygon'
-                ? f.geometry.coordinates[0]
-                : f.geometry.coordinates[0][0];
-              const lngs = coords.map(c => c[0]);
-              const lats = coords.map(c => c[1]);
-              return {
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [(Math.min(...lngs)+Math.max(...lngs))/2, (Math.min(...lats)+Math.max(...lats))/2] },
-                properties: { name: f.properties.ADMIN || f.properties.name || '' }
-              };
-            } catch { return null; }
-          }).filter(Boolean)
-        };
+      .then(r => r.json()).then(data => {
+        const centroids = { type: 'FeatureCollection', features: data.features.map(f => {
+          try {
+            const coords = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0];
+            const lngs = coords.map(c => c[0]), lats = coords.map(c => c[1]);
+            return { type: 'Feature', geometry: { type: 'Point', coordinates: [(Math.min(...lngs)+Math.max(...lngs))/2, (Math.min(...lats)+Math.max(...lats))/2] }, properties: { name: f.properties.ADMIN || f.properties.name || '' } };
+          } catch { return null; }
+        }).filter(Boolean) };
         map.addSource('labels', { type: 'geojson', data: centroids });
         map.addLayer({
-          id: 'country-labels',
-          type: 'symbol',
-          source: 'labels',
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 4, 13, 6, 16],
-            'text-max-width': 8,
-            'text-anchor': 'center',
-            'text-allow-overlap': false,
-            'text-ignore-placement': false,
-          },
-          paint: {
-            'text-color': '#8a8578',
-            'text-halo-color': '#d8d4cb',
-            'text-halo-width': 2,
-            'text-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.6, 3, 0.9]
-          }
+          id: 'country-labels', type: 'symbol', source: 'labels',
+          layout: { 'text-field': ['get', 'name'], 'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 4, 13, 6, 16], 'text-max-width': 8, 'text-anchor': 'center', 'text-allow-overlap': false },
+          paint: { 'text-color': '#8a8578', 'text-halo-color': '#d8d4cb', 'text-halo-width': 2, 'text-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.6, 3, 0.9] }
         });
       }).catch(() => {});
   }
 
   function addMarkersToMap(map) {
-    const ML = mlRef.current;
-    if (!ML) return;
-
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-
+    const ML = mlRef.current; if (!ML) return;
+    markersRef.current.forEach(m => m.remove()); markersRef.current = [];
     conflictsRef.current?.forEach(c => {
       if (c.lat == null || c.lng == null) return;
       const col = INTENSITY[c.intensity]?.color || C.low;
       const size = c.intensity === 'critical' ? 18 : c.intensity === 'high' ? 14 : 10;
       const dur = c.intensity === 'critical' ? '1.2s' : '2s';
-
       const wrapper = document.createElement('div');
-      wrapper.style.cssText = `width:0;height:0;overflow:visible;position:relative;cursor:pointer;`;
-
+      wrapper.style.cssText = 'width:0;height:0;overflow:visible;position:relative;cursor:pointer;';
       const ring1 = document.createElement('div');
       ring1.style.cssText = `position:absolute;width:${size+16}px;height:${size+16}px;border-radius:50%;border:1.5px solid ${col};transform:translate(-50%,-50%);animation:pinRing ${dur} ease-out infinite;pointer-events:none;`;
-
       const ring2 = document.createElement('div');
       ring2.style.cssText = `position:absolute;width:${size+8}px;height:${size+8}px;border-radius:50%;border:1px solid ${col};transform:translate(-50%,-50%);animation:pinRing ${dur} ease-out infinite;animation-delay:0.4s;pointer-events:none;`;
-
       const dot = document.createElement('div');
       dot.style.cssText = `position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${col};border:2.5px solid ${C.surface};box-shadow:0 0 ${size*1.5}px ${col}50,0 2px 8px rgba(0,0,0,0.3);transform:translate(-50%,-50%);transition:transform .2s;`;
-
-      wrapper.appendChild(ring1);
-      wrapper.appendChild(ring2);
-      wrapper.appendChild(dot);
-
+      wrapper.appendChild(ring1); wrapper.appendChild(ring2); wrapper.appendChild(dot);
       const tooltip = document.createElement('div');
-      tooltip.style.cssText = `position:absolute;left:0;transform:translate(-50%,calc(-${Math.ceil(size/2)}px - 100% - 6px));background:${C.surface};border:1px solid ${col}66;padding:4px 8px;white-space:nowrap;font-family:'Bebas Neue',sans-serif;font-size:13px;color:${col};letter-spacing:0.1em;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.15);`;
+      tooltip.style.cssText = `position:absolute;left:0;transform:translate(-50%,calc(-${Math.ceil(size/2)}px - 100% - 6px));background:${C.surface};border:1px solid ${col}66;padding:4px 10px;white-space:nowrap;font-family:'Bebas Neue',sans-serif;font-size:14px;color:${col};letter-spacing:0.1em;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.15);border-radius:3px;`;
       tooltip.textContent = c.meme_title || c.name;
       wrapper.appendChild(tooltip);
-
       wrapper.addEventListener('mouseenter', () => { dot.style.transform = 'translate(-50%,-50%) scale(1.3)'; tooltip.style.opacity = '1'; });
       wrapper.addEventListener('mouseleave', () => { dot.style.transform = 'translate(-50%,-50%)'; tooltip.style.opacity = '0'; });
-
-      const marker = new ML.Marker({ element: wrapper, anchor: 'center' })
-        .setLngLat([c.lng, c.lat])
-        .addTo(map);
-
+      const marker = new ML.Marker({ element: wrapper, anchor: 'center' }).setLngLat([c.lng, c.lat]).addTo(map);
       wrapper.addEventListener('click', (e) => {
         e.stopPropagation();
         map.flyTo({ center: [c.lng, c.lat], zoom: 5, duration: 1400, essential: true });
         setActiveConflict(c);
       });
-
       markersRef.current.push(marker);
     });
-  }
-
-  function handleSelectFromIndex(c) {
-    mapRef.current?.flyTo({ center: [c.lng, c.lat], zoom: 5, duration: 1400, essential: true });
-    setActiveConflict(c);
   }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <style>{`
-        @keyframes pinRing {
-          0% { transform: translate(-50%,-50%) scale(0.6); opacity: 0.8; }
-          100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
-        }
-        @keyframes windowIn {
-          from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
-          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
+        @keyframes pinRing { 0% { transform: translate(-50%,-50%) scale(0.6); opacity: 0.8; } 100% { transform: translate(-50%,-50%) scale(2); opacity: 0; } }
+        @keyframes windowIn { from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
       `}</style>
-
       <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
-
-      {/* Top right timestamp */}
       <TimeStamp />
-
-      {/* Collapsible index sidebar */}
-      <IndexSidebar
-        conflicts={conflicts}
-        vibeCheck={vibeCheck}
-        selectedId={activeConflict?.id}
-        onSelect={handleSelectFromIndex}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
-
-      {/* Overlay window — one at a time */}
-      {activeConflict && (
-        <OverlayWindow
-          conflict={activeConflict}
-          onClose={() => setActiveConflict(null)}
-        />
-      )}
-
-      {/* Bottom status bar */}
+      <IndexSidebar conflicts={conflicts} vibeCheck={vibeCheck} selectedId={activeConflict?.id} onSelect={(c) => { mapRef.current?.flyTo({ center: [c.lng, c.lat], zoom: 5, duration: 1400 }); setActiveConflict(c); }} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      {activeConflict && <OverlayWindow conflict={activeConflict} onClose={() => setActiveConflict(null)} onIntel={onIntel} />}
       <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '10px 20px',
+        position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 20px',
         background: `linear-gradient(0deg, ${C.bg}ee, transparent)`,
         display: 'flex', justifyContent: 'center', gap: 20,
-        fontFamily: "'Share Tech Mono',monospace", fontSize: 10,
-        letterSpacing: '0.08em', color: C.inkLight, zIndex: 50,
+        fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: C.inkLight, zIndex: 50,
       }}>
-        {Object.entries(INTENSITY).map(([key, cfg]) => (
-          <span key={key}>
-            <span style={{ color: cfg.color }}>●</span>{' '}
-            {conflicts?.filter(c => c.intensity === key).length || 0} {cfg.label}
-          </span>
+        {Object.entries(INTENSITY).map(([key, icfg]) => (
+          <span key={key}><span style={{ color: icfg.color }}>●</span> {conflicts?.filter(c => c.intensity === key).length || 0} {icfg.label}</span>
         ))}
         <span style={{ color: C.accent }}>● LIVE</span>
       </div>
@@ -868,22 +694,8 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
   );
 }
 
-/* ─── Timestamp ─── */
 function TimeStamp() {
   const [t, setT] = useState('');
-  useEffect(() => {
-    const tick = () => setT(new Date().toISOString().replace('T', '  ').slice(0, 21) + ' UTC');
-    tick();
-    const i = setInterval(tick, 1000);
-    return () => clearInterval(i);
-  }, []);
-  return (
-    <div style={{
-      position: 'absolute', top: 16, right: 20, zIndex: 600,
-      fontFamily: "'Share Tech Mono',monospace", fontSize: 10,
-      letterSpacing: '0.08em', color: C.inkFaint,
-      background: `${C.surface}cc`, padding: '6px 12px',
-      border: `1px solid ${C.border}`,
-    }}>{t}</div>
-  );
+  useEffect(() => { const tick = () => setT(new Date().toISOString().replace('T', '  ').slice(0, 21) + ' UTC'); tick(); const i = setInterval(tick, 1000); return () => clearInterval(i); }, []);
+  return <div style={{ position: 'absolute', top: 16, right: 20, zIndex: 600, fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: C.inkFaint, background: `${C.surface}cc`, padding: '6px 14px', border: `1px solid ${C.border}`, borderRadius: 3 }}>{t}</div>;
 }
