@@ -570,15 +570,24 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
 export default function MapView({ conflicts, vibeCheck, onIntel }) {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
+  const mapLoadedRef = useRef(false);
   const markersRef = useRef([]);
   const conflictsRef = useRef(conflicts);
   const mlRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeConflict, setActiveConflict] = useState(null);
 
-  useEffect(() => { conflictsRef.current = conflicts; }, [conflicts]);
+  // Keep ref in sync with prop
+  useEffect(() => {
+    conflictsRef.current = conflicts;
+    // If map already loaded, update markers immediately
+    if (mapLoadedRef.current && mapRef.current && conflicts?.length > 0) {
+      addMarkersToMap(mapRef.current);
+    }
+  }, [conflicts]);
+
+  // Init map once on mount
   useEffect(() => { if (mapRef.current || !mapContainer.current) return; initMap(); }, []);
-  useEffect(() => { if (mapRef.current?.loaded() && conflicts?.length > 0) addMarkersToMap(mapRef.current); }, [conflicts]);
 
   async function initMap() {
     const ml = await import('maplibre-gl');
@@ -612,6 +621,7 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
     });
     map.on('load', () => {
       mapRef.current = map;
+      mapLoadedRef.current = true;
       addCountryLabels(map);
       if (conflictsRef.current?.length > 0) addMarkersToMap(map);
     });
