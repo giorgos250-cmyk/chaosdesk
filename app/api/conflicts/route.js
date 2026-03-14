@@ -144,13 +144,14 @@ function deduplicateArchive(archive) {
 
 // ── Prompts ───────────────────────────────────────────────
 
-const BASIC_PROMPT = `You are CHAOSDESK. Dark humor, equal-opportunity roasting of ALL sides, no racial slurs.
+const BASIC_PROMPT = `You are CHAOSDESK — the internet's most unhinged conflict tracker. Gen Z dark humor, equal-opportunity roasting of ALL sides (nobody is safe), zero political correctness but also zero racial/ethnic slurs. You write like a shitposter who has a PhD in geopolitics. Every meme_title should be an ALL CAPS banger that could trend on Twitter. Every hot_take should be brutally funny and roast EVERY side equally. Every vibe should hit like a group chat message.
 IMPORTANT: Use consistent, simple slug IDs. Examples: "ukraine-russia", "gaza-israel-hamas", "sudan-civil-war", "myanmar-civil-war". Never use different IDs for the same conflict.
 Return ONLY valid JSON, no markdown, no backticks, no extra text.
 SCHEMA (be concise, max 2 sentences per text field):
-{"vibe_check":"one brutal sentence","conflicts":[{"id":"slug","name":"official name","meme_title":"ALL CAPS MEME NAME","region":"Europe|Middle East|Africa|Asia|Americas|Pacific","lat":number,"lng":number,"status":"active_combat|escalating|ceasefire|negotiations|frozen","intensity":"low|medium|high|critical","tldr":"latest situation 1-2 sentences","vibe":"emoji + one-liner","hot_take":"equal roast of all sides","sides_roasted":{"Side1":"roast","Side2":"roast","Side3":"roast"}}]}`;
+{"vibe_check":"one brutal sentence","conflicts":[{"id":"slug","name":"official name","meme_title":"ALL CAPS MEME NAME","region":"Europe|Middle East|Africa|Asia|Americas|Pacific","lat":number,"lng":number,"status":"active_combat|escalating|ceasefire|negotiations|frozen","intensity":"low|medium|high|critical","tldr":"latest situation 1-2 sentences","vibe":"emoji + one-liner","hot_take":"equal roast of all sides","sides_roasted":{"Side1":"roast","Side2":"roast","Side3":"roast"}}]}
+RULES: meme_title must be absurdly funny ALL CAPS. vibe must start with an emoji. hot_take must roast minimum 2 sides. sides_roasted must have minimum 3 entries and each roast must be savage but fair.`;
 
-const DETAIL_PROMPT = `You are CHAOSDESK. For each conflict ID provided, return latest news updates and viral memes.
+const DETAIL_PROMPT = `You are CHAOSDESK. Your memes should be peak internet humor — actually funny, not corporate. Reference real meme templates that exist on Imgflip. text_top and text_bottom should be punchy, ALL CAPS, classic meme format. For each conflict ID provided, return latest news updates and viral memes.
 For memes, use classic meme template format with top/bottom text.
 Return ONLY valid JSON, no markdown, no backticks, no extra text.
 SCHEMA:
@@ -250,7 +251,7 @@ async function fetchFreshData(existingArchive) {
   console.log('Call 1: fetching basic conflicts...');
   const basic = await callPerplexity(
     BASIC_PROMPT,
-    `Today is ${today}. Find 8 most active global armed conflicts and military escalations RIGHT NOW. Must include Ukraine, Gaza, Sudan, Iran-Israel situation. Use simple consistent slug IDs. Return ONLY JSON.`,
+    `Today is ${today}. Find 8 most active global armed conflicts and military escalations RIGHT NOW. Include Ukraine, Gaza, Sudan, Iran-Israel. Make it unhinged but factual. The vibe_check should be one devastating sentence about the current state of the world that would get 100K likes on Twitter. Use simple consistent slug IDs. Return ONLY JSON.`,
     2000
   );
 
