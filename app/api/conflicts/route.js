@@ -8,9 +8,144 @@ const SENTINEL_KEY = 'chaosdesk:sentinel';
 const LAST_FETCH_KEY = 'chaosdesk:last_fetch';
 const VIBE_KEY = 'chaosdesk:vibe';
 
+// ── ID Normalization & Dedup ──────────────────────────────
+
+// Canonical conflict keys — map variant slugs to a single canonical ID
+const CANONICAL_MAP = {
+  'ukraine': 'ukraine-russia',
+  'russia-ukraine': 'ukraine-russia',
+  'russia-ukraine-war': 'ukraine-russia',
+  'ukraine-war': 'ukraine-russia',
+  'ukraine-russia-war': 'ukraine-russia',
+  'gaza': 'gaza-israel-hamas',
+  'gaza-war': 'gaza-israel-hamas',
+  'israel-gaza': 'gaza-israel-hamas',
+  'israel-hamas': 'gaza-israel-hamas',
+  'israel-hamas-war': 'gaza-israel-hamas',
+  'israel-palestine': 'gaza-israel-hamas',
+  'gaza-strip': 'gaza-israel-hamas',
+  'gaza-strip-conflict': 'gaza-israel-hamas',
+  'gaza-israel-hamas-war': 'gaza-israel-hamas',
+  'sudan': 'sudan-civil-war',
+  'sudan-war': 'sudan-civil-war',
+  'sudan-conflict': 'sudan-civil-war',
+  'myanmar': 'myanmar-civil-war',
+  'myanmar-war': 'myanmar-civil-war',
+  'myanmar-conflict': 'myanmar-civil-war',
+  'iran-israel': 'iran-israel-shadow-war',
+  'iran-israel-conflict': 'iran-israel-shadow-war',
+  'iran-israel-war': 'iran-israel-shadow-war',
+  'venezuela': 'venezuela-us',
+  'us-venezuela': 'venezuela-us',
+  'venezuela-crisis': 'venezuela-us',
+  'sahel': 'sahel-insurgency',
+  'sahel-expansion': 'sahel-insurgency',
+  'sahel-militant': 'sahel-insurgency',
+  'sahel-militant-expansion': 'sahel-insurgency',
+  'sahel-jihadist': 'sahel-insurgency',
+  'sahel-jihadist-insurgency': 'sahel-insurgency',
+  'congo': 'drc-m23',
+  'drc': 'drc-m23',
+  'congo-rwanda': 'drc-m23',
+  'drc-rwanda': 'drc-m23',
+  'drc-rwanda-m23': 'drc-m23',
+  'dr-congo-rwanda-m23': 'drc-m23',
+  'west-bank': 'west-bank-clashes',
+  'west-bank-israeli-palestinian': 'west-bank-clashes',
+  'haiti': 'haiti-gang-wars',
+  'haiti-gangs': 'haiti-gang-wars',
+  'haiti-crisis': 'haiti-gang-wars',
+  'mexico': 'mexico-cartel-wars',
+  'mexico-cartels': 'mexico-cartel-wars',
+  'cambodia-thailand': 'cambodia-thailand-border',
+  'cambodia': 'cambodia-thailand-border',
+};
+
+function normalizeId(id) {
+  if (!id) return 'unknown';
+  const slug = id.toLowerCase().trim().replace(/\s+/g, '-');
+  return CANONICAL_MAP[slug] || slug;
+}
+
+// Additional similarity check by name keywords
+function areSameConflict(a, b) {
+  if (!a.name || !b.name) return false;
+  const nameA = a.name.toLowerCase();
+  const nameB = b.name.toLowerCase();
+  
+  // Extract significant keywords (3+ chars)
+  const wordsA = nameA.split(/[\s\-–—,]+/).filter(w => w.length > 2);
+  const wordsB = nameB.split(/[\s\-–—,]+/).filter(w => w.length > 2);
+  
+  // If 2+ significant words overlap, likely same conflict
+  const overlap = wordsA.filter(w => wordsB.some(wb => wb.includes(w) || w.includes(wb)));
+  return overlap.length >= 2;
+}
+
+// Merge two conflict objects, preferring newer data
+function mergeConflicts(older, newer) {
+  const merged = { ...older, ...newer };
+  
+  // Merge updates (dedup by headline)
+  const allUpdates = [...(newer.latest_updates || []), ...(older.latest_updates || [])];
+  const seenHeadlines = new Set();
+  merged.latest_updates = allUpdates.filter(u => {
+    if (!u.headline || seenHeadlines.has(u.headline)) return false;
+    seenHeadlines.add(u.headline);
+    return true;
+  }).slice(0, 6);
+  
+  // Merge memes (dedup by text)
+  const allMemes = [...(newer.memes || []), ...(older.memes || [])];
+  const seenMemes = new Set();
+  merged.memes = allMemes.filter(m => {
+    const key = (m.text || m.text_top || '').toLowerCase();
+    if (seenMemes.has(key)) return false;
+    seenMemes.add(key);
+    return true;
+  }).slice(0, 4);
+  
+  // Prefer newer fields
+  merged.sides_roasted = newer.sides_roasted || older.sides_roasted;
+  merged.data_points = { ...(older.data_points || {}), ...(newer.data_points || {}) };
+  
+  return merged;
+}
+
+// Deduplicate entire archive
+function deduplicateArchive(archive) {
+  const entries = Object.entries(archive);
+  const canonical = {};
+  
+  for (const [id, conflict] of entries) {
+    const normId = normalizeId(id);
+    
+    if (canonical[normId]) {
+      // Merge with existing canonical entry
+      canonical[normId] = mergeConflicts(canonical[normId], { ...conflict, id: normId });
+    } else {
+      // Check name similarity with existing entries
+      let merged = false;
+      for (const [cId, cConflict] of Object.entries(canonical)) {
+        if (areSameConflict(conflict, cConflict)) {
+          canonical[cId] = mergeConflicts(cConflict, { ...conflict, id: cId });
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        canonical[normId] = { ...conflict, id: normId };
+      }
+    }
+  }
+  
+  return canonical;
+}
+
 // ── Prompts ───────────────────────────────────────────────
 
 const BASIC_PROMPT = `You are CHAOSDESK. Dark humor, equal-opportunity roasting of ALL sides, no racial slurs.
+IMPORTANT: Use consistent, simple slug IDs. Examples: "ukraine-russia", "gaza-israel-hamas", "sudan-civil-war", "myanmar-civil-war". Never use different IDs for the same conflict.
 Return ONLY valid JSON, no markdown, no backticks, no extra text.
 SCHEMA (be concise, max 2 sentences per text field):
 {"vibe_check":"one brutal sentence","conflicts":[{"id":"slug","name":"official name","meme_title":"ALL CAPS MEME NAME","region":"Europe|Middle East|Africa|Asia|Americas|Pacific","lat":number,"lng":number,"status":"active_combat|escalating|ceasefire|negotiations|frozen","intensity":"low|medium|high|critical","tldr":"latest situation 1-2 sentences","vibe":"emoji + one-liner","hot_take":"equal roast of all sides","sides_roasted":{"Side1":"roast","Side2":"roast","Side3":"roast"}}]}`;
@@ -48,34 +183,8 @@ function parseJ(text) {
     if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
   }
 
-  const slice = end !== -1 ? clean.slice(start, end + 1) : clean.slice(start);
-
-  // Try direct parse first
-  try { return JSON.parse(slice); } catch (_) {}
-
-  // Recovery: strip trailing incomplete field, then close open structures
-  let attempt = slice
-    .replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, '')  // incomplete string value
-    .replace(/,\s*"[^"]*"\s*:\s*[^,}\]]*$/, '') // incomplete non-string value
-    .replace(/,\s*"[^"]*$/, '');                 // incomplete key
-
-  // Close any open arrays/objects
-  const opens = [];
-  inStr = false; esc = false;
-  for (const ch of attempt) {
-    if (esc) { esc = false; continue; }
-    if (ch === '\\' && inStr) { esc = true; continue; }
-    if (ch === '"') { inStr = !inStr; continue; }
-    if (inStr) continue;
-    if (ch === '{') opens.push('}');
-    else if (ch === '[') opens.push(']');
-    else if (ch === '}' || ch === ']') opens.pop();
-  }
-  attempt += opens.reverse().join('');
-
-  try { return JSON.parse(attempt); } catch (e) {
-    throw new Error(`JSON parse failed: ${e.message}`);
-  }
+  if (end !== -1) return JSON.parse(clean.slice(start, end + 1));
+  throw new Error('Could not find end of JSON');
 }
 
 async function callPerplexity(systemPrompt, userMsg, maxTokens = 2000) {
@@ -106,29 +215,22 @@ async function callPerplexity(systemPrompt, userMsg, maxTokens = 2000) {
 function enrichArchive(archive, newConflicts, details) {
   const detailMap = {};
   if (details?.details) {
-    for (const d of details.details) detailMap[d.id] = d;
+    for (const d of details.details) {
+      const normId = normalizeId(d.id);
+      detailMap[normId] = d;
+    }
   }
 
   for (const c of newConflicts) {
     if (!c.id) continue;
-    const det = detailMap[c.id] || {};
-    const enriched = { ...c, ...det };
+    const normId = normalizeId(c.id);
+    const det = detailMap[normId] || {};
+    const enriched = { ...c, ...det, id: normId };
 
-    if (archive[c.id]) {
-      const old = archive[c.id];
-      const allUpdates = [...(enriched.latest_updates || []), ...(old.latest_updates || [])];
-      const seen = new Set();
-      enriched.latest_updates = allUpdates.filter(u => {
-        if (seen.has(u.headline)) return false;
-        seen.add(u.headline);
-        return true;
-      }).slice(0, 6);
-      enriched.memes = [...(enriched.memes || []), ...(old.memes || [])].slice(0, 4);
-      // Preserve sides_roasted from new data, fallback to old
-      enriched.sides_roasted = enriched.sides_roasted || old.sides_roasted;
-      archive[c.id] = { ...old, ...enriched };
+    if (archive[normId]) {
+      archive[normId] = mergeConflicts(archive[normId], enriched);
     } else {
-      archive[c.id] = enriched;
+      archive[normId] = enriched;
     }
   }
   return archive;
@@ -148,7 +250,7 @@ async function fetchFreshData(existingArchive) {
   console.log('Call 1: fetching basic conflicts...');
   const basic = await callPerplexity(
     BASIC_PROMPT,
-    `Today is ${today}. Find 8 most active global armed conflicts and military escalations RIGHT NOW. Must include Ukraine, Gaza, Sudan, Iran-Israel situation. Return ONLY JSON.`,
+    `Today is ${today}. Find 8 most active global armed conflicts and military escalations RIGHT NOW. Must include Ukraine, Gaza, Sudan, Iran-Israel situation. Use simple consistent slug IDs. Return ONLY JSON.`,
     2000
   );
 
@@ -156,7 +258,7 @@ async function fetchFreshData(existingArchive) {
   if (conflicts.length === 0) throw new Error('No conflicts returned');
 
   console.log('Call 2: fetching details + memes...');
-  const ids = conflicts.map(c => c.id).join(', ');
+  const ids = conflicts.map(c => normalizeId(c.id)).join(', ');
   let details = { details: [] };
   try {
     details = await callPerplexity(
@@ -168,7 +270,10 @@ async function fetchFreshData(existingArchive) {
     console.log('Details call failed, continuing without:', e.message);
   }
 
-  const newArchive = enrichArchive({ ...existingArchive }, conflicts, details);
+  // Enrich then deduplicate
+  let newArchive = enrichArchive({ ...existingArchive }, conflicts, details);
+  newArchive = deduplicateArchive(newArchive);
+  
   const sorted = sortConflicts(newArchive);
 
   await Promise.all([
@@ -202,10 +307,9 @@ async function fetchFreshData(existingArchive) {
 }
 
 // ── Route Handler ─────────────────────────────────────────
-export async function GET(request) {
+export async function GET() {
   try {
     const now = Date.now();
-    const force = new URL(request.url).searchParams.get('force') === 'true';
 
     const [archiveRaw, lastFetchRaw, sentinelRaw, vibe] = await Promise.all([
       redis.get(ARCHIVE_KEY),
@@ -214,7 +318,7 @@ export async function GET(request) {
       redis.get(VIBE_KEY)
     ]);
 
-    const archive = archiveRaw
+    let archive = archiveRaw
       ? (typeof archiveRaw === 'string' ? JSON.parse(archiveRaw) : archiveRaw)
       : {};
     const lastFetch = lastFetchRaw ? parseInt(String(lastFetchRaw)) : 0;
@@ -223,9 +327,18 @@ export async function GET(request) {
       : { conflicts: [] };
     const hasArchive = Object.keys(archive).length > 0;
 
-    if (!force && hasArchive && (now - lastFetch) < FETCH_INTERVAL) {
+    // Always dedup on read (cleans up legacy data)
+    if (hasArchive) {
+      archive = deduplicateArchive(archive);
+    }
+
+    if (hasArchive && (now - lastFetch) < FETCH_INTERVAL) {
       console.log(`Redis hit — ${Object.keys(archive).length} events, age: ${Math.round((now - lastFetch) / 3600000)}h`);
       const conflicts = sortConflicts(archive);
+      
+      // Save cleaned archive back
+      await redis.set(ARCHIVE_KEY, JSON.stringify(archive));
+      
       return Response.json({
         chaos: {
           generated_at: new Date().toISOString(),
