@@ -147,7 +147,7 @@ function TornWindow({ conflict, onClose, children }) {
         top: `${40 + Math.random() * 50}%`,
         height: 2, background: cfg.color, opacity: 0.4, zIndex: 5,
       }} />}
-      <div style={{ padding: '24px 26px 28px' }}>{children}</div>
+      <div style={{ padding: '24px 26px 28px', minWidth: 0, overflowX: 'hidden' }}>{children}</div>
     </div>
   );
 }
@@ -179,7 +179,7 @@ function BlackboardWindow({ conflict, onClose, children }) {
           cursor: 'pointer', borderRadius: 3,
         }}>[×]</button>
       </div>
-      <div style={{ padding: '24px 26px 28px' }}>{children}</div>
+      <div style={{ padding: '24px 26px 28px', minWidth: 0, overflowX: 'hidden' }}>{children}</div>
     </div>
   );
 }
@@ -211,7 +211,7 @@ function NotebookWindow({ conflict, onClose, children }) {
           fontSize: 20, color: C.inkLight, cursor: 'pointer',
         }}>✕</button>
       </div>
-      <div style={{ padding: '24px 26px 28px 56px', position: 'relative', zIndex: 2 }}>{children}</div>
+      <div style={{ padding: '24px 26px 28px 56px', position: 'relative', zIndex: 2, minWidth: 0, overflowX: 'hidden' }}>{children}</div>
     </div>
   );
 }
@@ -247,7 +247,7 @@ function ClipboardWindow({ conflict, onClose, children }) {
             cursor: 'pointer', borderRadius: 3,
           }}>Close</button>
         </div>
-        <div style={{ padding: '24px 26px 28px' }}>{children}</div>
+        <div style={{ padding: '24px 26px 28px', minWidth: 0, overflowX: 'hidden' }}>{children}</div>
       </div>
     </div>
   );
@@ -387,11 +387,11 @@ function CardContent({ conflict, dark = false, onIntel }) {
       {conflict.data_points && Object.keys(conflict.data_points).length > 0 && (
         <div style={{ marginBottom: 28 }}>
           <SectionHead text="INTEL DATA" color={cfg.color} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
             {Object.entries(conflict.data_points).map(([k, v]) => (
-              <div key={k} style={{ padding: '12px 16px', background: surfaceC, border: `1px solid ${borderC}`, borderRadius: 4 }}>
+              <div key={k} style={{ padding: '12px 16px', background: surfaceC, border: `1px solid ${borderC}`, borderRadius: 4, minWidth: 0, overflow: 'hidden' }}>
                 <div style={{ fontFamily: "'Roboto Mono',monospace", fontSize: 10, letterSpacing: '0.12em', color: txtFaint, textTransform: 'uppercase', marginBottom: 4 }}>{k}</div>
-                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 'clamp(20px, 5vw, 28px)', color: cfg.color }}>{v}</div>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 'clamp(20px, 5vw, 28px)', color: cfg.color, wordBreak: 'break-word' }}>{v}</div>
               </div>
             ))}
           </div>
@@ -428,7 +428,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
       {conflict.sides_roasted && Object.keys(conflict.sides_roasted).length > 0 && (
         <div style={{ marginBottom: 28 }}>
           <SectionHead text="EQUAL OPPORTUNITY ROAST" color={cfg.color} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
             {Object.entries(conflict.sides_roasted).map(([side, roast], i) => {
               const colors = [C.critical, C.high, C.low, C.medium, C.accent, '#9c27b0', '#ff9100'];
               const sc = colors[i % colors.length];
@@ -436,7 +436,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
                 <div key={side} style={{
                   padding: '16px', background: surfaceC,
                   border: `1px solid ${borderC}`, borderRadius: 6,
-                  borderTop: `3px solid ${sc}`,
+                  borderTop: `3px solid ${sc}`, minWidth: 0, overflow: 'hidden',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <CrewFigure color={sc} size={26} />
