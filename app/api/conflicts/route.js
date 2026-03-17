@@ -168,6 +168,25 @@ SCHEMA:
 {"conflicts":[{"id":"slug","verified_summary":"neutral 1-2 sentences","updates":[{"headline":"short","body":"2 sentences","sources":["Source"],"utc_hint":"Mon DD"}],"data_points":{"label":"value"}}]}`;
 
 // ── JSON Parser ───────────────────────────────────────────
+
+// Escape unescaped control chars inside JSON string values
+function sanitizeJsonStrings(str) {
+  let out = '', inStr = false, esc = false;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (esc) { esc = false; out += ch; continue; }
+    if (ch === '\\' && inStr) { esc = true; out += ch; continue; }
+    if (ch === '"') { inStr = !inStr; out += ch; continue; }
+    if (inStr && ch.charCodeAt(0) < 0x20) {
+      const map = { '\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f' };
+      out += map[ch] || `\\u${ch.charCodeAt(0).toString(16).padStart(4,'0')}`;
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 function parseJ(text) {
   let clean = text
     .replace(/\[\d+\]/g, '')
@@ -178,6 +197,7 @@ function parseJ(text) {
   const start = clean.indexOf('{');
   if (start === -1) throw new Error('No JSON found');
 
+  // Find matching closing brace
   let depth = 0, end = -1, inStr = false, esc = false;
   for (let i = start; i < clean.length; i++) {
     const ch = clean[i];
@@ -189,8 +209,33 @@ function parseJ(text) {
     if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
   }
 
-  if (end !== -1) return JSON.parse(clean.slice(start, end + 1));
-  throw new Error('Could not find end of JSON');
+  const slice = end !== -1 ? clean.slice(start, end + 1) : clean.slice(start);
+
+  // Try direct parse after sanitizing control chars
+  try { return JSON.parse(sanitizeJsonStrings(slice)); } catch (_) {}
+
+  // Recovery: strip trailing incomplete field, close open structures
+  let attempt = sanitizeJsonStrings(slice)
+    .replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, '')
+    .replace(/,\s*"[^"]*"\s*:\s*[^,}\]]*$/, '')
+    .replace(/,\s*"[^"]*$/, '');
+
+  const opens = [];
+  inStr = false; esc = false;
+  for (const ch of attempt) {
+    if (esc) { esc = false; continue; }
+    if (ch === '\\' && inStr) { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === '{') opens.push('}');
+    else if (ch === '[') opens.push(']');
+    else if (ch === '}' || ch === ']') opens.pop();
+  }
+  attempt += opens.reverse().join('');
+
+  try { return JSON.parse(attempt); } catch (e) {
+    throw new Error(`JSON parse failed: ${e.message}`);
+  }
 }
 
 async function callPerplexity(systemPrompt, userMsg, maxTokens = 2000) {
