@@ -62,7 +62,7 @@ export default function BootPage() {
         @keyframes bk{0%,100%{opacity:1;}50%{opacity:0;}}
         .el::after{content:'';animation:dt 1.4s steps(4,end) infinite;}
         @keyframes dt{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}100%{content:'';}}
-        .ib{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,3.5vw,20px);letter-spacing:0.22em;background:transparent;border:2px solid #c4bfb6;color:#c4bfb6;padding:14px 36px;cursor:not-allowed;transition:all .3s;min-width:240px;}
+        .ib{font-family:'Barlow Condensed',sans-serif;font-size:clamp(14px,3.5vw,20px);letter-spacing:0.22em;background:transparent;border:2px solid #c4bfb6;color:#c4bfb6;padding:14px 36px;cursor:not-allowed;transition:all .3s;min-width:240px;}
         .ir{border-color:#d4163c!important;color:#d4163c!important;cursor:pointer!important;}
         .ir:hover{background:#d4163c!important;color:#f2efe9!important;transform:scale(1.02);}
         .launching{opacity:0;transform:scale(1.05);transition:all .3s ease-out;}
@@ -71,7 +71,7 @@ export default function BootPage() {
       <div className={phase === 'launching' ? 'launching' : ''}>
         {/* Logo */}
         <div style={{
-          fontFamily: "'Bebas Neue',Impact,sans-serif",
+          fontFamily: "'Barlow Condensed',Impact,sans-serif",
           fontSize: 'clamp(52px,13vw,120px)',
           letterSpacing: '0.12em', color: '#1c1a17',
           lineHeight: 1, textAlign: 'center',

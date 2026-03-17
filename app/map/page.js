@@ -45,7 +45,7 @@ export default function MapPage() {
         alignItems: 'center', justifyContent: 'center', gap: 16,
       }}>
         <div style={{
-          fontFamily: "'Bebas Neue',sans-serif",
+          fontFamily: "'Barlow Condensed',sans-serif",
           fontSize: 32, letterSpacing: '0.15em', color: '#1c1a17',
         }}>CHAOSDESK</div>
         <div style={{
@@ -70,7 +70,7 @@ export default function MapPage() {
         alignItems: 'center', justifyContent: 'center', gap: 16,
       }}>
         <div style={{
-          fontFamily: "'Bebas Neue',sans-serif",
+          fontFamily: "'Barlow Condensed',sans-serif",
           fontSize: 32, letterSpacing: '0.15em', color: '#d4163c',
         }}>ERROR</div>
         <div style={{
@@ -78,7 +78,7 @@ export default function MapPage() {
           fontSize: 13, color: '#6b6660', textAlign: 'center', maxWidth: 400,
         }}>⚠ {err}</div>
         <button onClick={() => window.location.reload()} style={{
-          fontFamily: "'Bebas Neue',sans-serif",
+          fontFamily: "'Barlow Condensed',sans-serif",
           fontSize: 16, letterSpacing: '0.12em',
           padding: '10px 24px', border: '2px solid #d4163c',
           background: 'transparent', color: '#d4163c',

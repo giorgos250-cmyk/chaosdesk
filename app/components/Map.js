@@ -62,7 +62,7 @@ function SusBadge() {
     <span style={{
       display: 'inline-block', padding: '2px 8px',
       background: `${C.sus}12`, border: `2px solid ${C.sus}`,
-      borderRadius: 3, fontFamily: "'Bebas Neue',sans-serif",
+      borderRadius: 3, fontFamily: "'Barlow Condensed',sans-serif",
       fontSize: 13, letterSpacing: '0.15em', color: C.sus,
       transform: 'rotate(-2deg)', flexShrink: 0,
     }}>⚠ SUS</span>
@@ -119,14 +119,14 @@ function TornWindow({ conflict, onClose, children }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{
-            fontFamily: "'Bebas Neue',sans-serif", fontSize: 24,
+            fontFamily: "'Barlow Condensed',sans-serif", fontSize: 24,
             letterSpacing: '0.12em', color: '#fff',
             textShadow: '2px 2px 0 rgba(0,0,0,0.3)',
           }}>🚨 EMERGENCY ALERT</span>
         </div>
         <button onClick={onClose} style={{
           background: 'rgba(0,0,0,0.25)', border: '2px solid rgba(255,255,255,0.4)',
-          color: '#fff', fontFamily: "'Bebas Neue',sans-serif",
+          color: '#fff', fontFamily: "'Barlow Condensed',sans-serif",
           fontSize: 15, letterSpacing: '0.1em', borderRadius: 4,
           padding: '5px 14px', cursor: 'pointer',
         }}>DISMISS ✕</button>
@@ -167,15 +167,15 @@ function BlackboardWindow({ conflict, onClose, children }) {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: "'VT323',monospace", fontSize: 20, color: cfg.color }}>▓</span>
+          <span style={{ fontFamily: "'Courier Prime',monospace", fontSize: 20, color: cfg.color }}>▓</span>
           <span style={{
-            fontFamily: "'Share Tech Mono',monospace", fontSize: 12,
+            fontFamily: "'Roboto Mono',monospace", fontSize: 12,
             color: C.darkTextDim, letterSpacing: '0.05em',
           }}>chaosdesk://intel/{conflict.id}</span>
         </div>
         <button onClick={onClose} style={{
           background: 'none', border: `1px solid ${cfg.color}40`, color: cfg.color,
-          fontFamily: "'VT323',monospace", fontSize: 18, padding: '2px 12px',
+          fontFamily: "'Courier Prime',monospace", fontSize: 18, padding: '2px 12px',
           cursor: 'pointer', borderRadius: 3,
         }}>[×]</button>
       </div>
@@ -203,11 +203,11 @@ function NotebookWindow({ conflict, onClose, children }) {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         position: 'relative', zIndex: 2,
       }}>
-        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: '0.12em', color: C.inkMid }}>
+        <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, letterSpacing: '0.12em', color: C.inkMid }}>
           FIELD REPORT — {conflict.id?.toUpperCase()}
         </span>
         <button onClick={onClose} style={{
-          background: 'none', border: 'none', fontFamily: "'Bebas Neue',sans-serif",
+          background: 'none', border: 'none', fontFamily: "'Barlow Condensed',sans-serif",
           fontSize: 20, color: C.inkLight, cursor: 'pointer',
         }}>✕</button>
       </div>
@@ -261,7 +261,7 @@ const WINDOWS = { torn: TornWindow, blackboard: BlackboardWindow, notebook: Note
 function SectionHead({ text, color }) {
   return (
     <div style={{
-      fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: '0.15em',
+      fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, letterSpacing: '0.15em',
       color, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10,
     }}>
       <span style={{ width: 22, height: 3, background: color, borderRadius: 1, display: 'inline-block' }} />
@@ -302,7 +302,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
     <div>
       {/* Title */}
       <h2 style={{
-        fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(28px, 7vw, 44px)', letterSpacing: '0.08em',
+        fontFamily: "'Barlow Condensed',sans-serif", fontSize: 'clamp(28px, 7vw, 44px)', letterSpacing: '0.08em',
         color: txt, margin: '0 0 8px 0', lineHeight: 1.05,
         wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>{conflict.name}</h2>
@@ -312,7 +312,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
         <span style={{
           padding: '4px 14px', background: `${cfg.color}12`,
           border: `2px solid ${cfg.color}`, borderRadius: 4,
-          fontFamily: "'Bebas Neue',sans-serif", fontSize: 15,
+          fontFamily: "'Barlow Condensed',sans-serif", fontSize: 15,
           letterSpacing: '0.12em', color: cfg.color,
           display: 'inline-flex', alignItems: 'center', gap: 6,
         }}>
@@ -321,13 +321,13 @@ function CardContent({ conflict, dark = false, onIntel }) {
         </span>
         <span style={{
           padding: '4px 12px', border: `1px solid ${borderC}`, borderRadius: 3,
-          fontFamily: "'Share Tech Mono',monospace", fontSize: 12, color: dark ? '#ffffff55' : C.inkLight,
+          fontFamily: "'Roboto Mono',monospace", fontSize: 12, color: dark ? '#ffffff55' : C.inkLight,
         }}>{STATUS[conflict.status] || conflict.status?.toUpperCase()}</span>
       </div>
 
       {/* Meme title */}
       <div style={{
-        fontFamily: "'VT323',monospace", fontSize: 'clamp(16px, 4vw, 22px)', color: cfg.color,
+        fontFamily: "'Courier Prime',monospace", fontSize: 'clamp(16px, 4vw, 22px)', color: cfg.color,
         marginBottom: 16, lineHeight: 1.2, wordBreak: 'break-word',
       }}>{'// '}{conflict.meme_title}</div>
 
@@ -341,7 +341,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
       <div style={{
         padding: '14px 18px', background: surfaceC,
         borderLeft: `4px solid ${cfg.color}`, borderRadius: '0 6px 6px 0',
-        marginBottom: 28, fontFamily: "'VT323',monospace",
+        marginBottom: 28, fontFamily: "'Courier Prime',monospace",
         fontSize: 22, color: txt, lineHeight: 1.4,
       }}>{conflict.vibe}</div>
 
@@ -365,14 +365,14 @@ function CardContent({ conflict, dark = false, onIntel }) {
                     background: dark ? 'linear-gradient(135deg, #1a1a2e, #16162a)' : `linear-gradient(135deg, ${C.bgCool}, ${C.bgWarm})`,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
                   }}>
-                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, color: dark ? '#fff' : C.ink, textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{meme.text_top || ''}</div>
-                    <div style={{ padding: '4px 14px', border: `2px dashed ${cfg.color}50`, borderRadius: 4, fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: cfg.color, opacity: 0.6 }}>[{(meme.format || 'MEME').toUpperCase()}]</div>
-                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: dark ? '#fff' : C.ink, textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{meme.text_bottom || ''}</div>
+                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, color: dark ? '#fff' : C.ink, textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{meme.text_top || ''}</div>
+                    <div style={{ padding: '4px 14px', border: `2px dashed ${cfg.color}50`, borderRadius: 4, fontFamily: "'Roboto Mono',monospace", fontSize: 11, color: cfg.color, opacity: 0.6 }}>[{(meme.format || 'MEME').toUpperCase()}]</div>
+                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, color: dark ? '#fff' : C.ink, textAlign: 'center', letterSpacing: '0.06em', lineHeight: 1.2 }}>{meme.text_bottom || ''}</div>
                   </div>
                 )}
                 <div style={{ padding: '8px 14px', borderTop: `1px solid ${borderC}`, display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: "'VT323',monospace", fontSize: 16, color: cfg.color }}>{meme.format}</span>
-                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, color: txtFaint }}>via {meme.source || 'unknown'}</span>
+                  <span style={{ fontFamily: "'Courier Prime',monospace", fontSize: 16, color: cfg.color }}>{meme.format}</span>
+                  <span style={{ fontFamily: "'Roboto Mono',monospace", fontSize: 10, color: txtFaint }}>via {meme.source || 'unknown'}</span>
                 </div>
                 {!meme.text_top && meme.text && (
                   <div style={{ padding: '8px 14px', borderTop: `1px solid ${borderC}`, fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid, fontStyle: 'italic', wordBreak: 'break-word' }}>"{meme.text}"</div>
@@ -390,8 +390,8 @@ function CardContent({ conflict, dark = false, onIntel }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
             {Object.entries(conflict.data_points).map(([k, v]) => (
               <div key={k} style={{ padding: '12px 16px', background: surfaceC, border: `1px solid ${borderC}`, borderRadius: 4 }}>
-                <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, letterSpacing: '0.12em', color: txtFaint, textTransform: 'uppercase', marginBottom: 4 }}>{k}</div>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(20px, 5vw, 28px)', color: cfg.color }}>{v}</div>
+                <div style={{ fontFamily: "'Roboto Mono',monospace", fontSize: 10, letterSpacing: '0.12em', color: txtFaint, textTransform: 'uppercase', marginBottom: 4 }}>{k}</div>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 'clamp(20px, 5vw, 28px)', color: cfg.color }}>{v}</div>
               </div>
             ))}
           </div>
@@ -404,9 +404,9 @@ function CardContent({ conflict, dark = false, onIntel }) {
           <SectionHead text="LATEST UPDATES" color={cfg.color} />
           {conflict.latest_updates.map((u, i) => (
             <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: `1px solid ${borderC}` }}>
-              <div style={{ fontFamily: "'VT323',monospace", fontSize: 18, color: i === 0 ? cfg.color : txtFaint, minWidth: 58, whiteSpace: 'nowrap' }}>{u.date}</div>
+              <div style={{ fontFamily: "'Courier Prime',monospace", fontSize: 18, color: i === 0 ? cfg.color : txtFaint, minWidth: 58, whiteSpace: 'nowrap' }}>{u.date}</div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: txt, marginBottom: 4, wordBreak: 'break-word' }}>{u.headline}</div>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, color: txt, marginBottom: 4, wordBreak: 'break-word' }}>{u.headline}</div>
                 <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid, lineHeight: 1.6, wordBreak: 'break-word' }}>{u.detail}</div>
               </div>
             </div>
@@ -440,7 +440,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <CrewFigure color={sc} size={26} />
-                    <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: '0.1em', color: sc }}>{side.toUpperCase()}</span>
+                    <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, letterSpacing: '0.1em', color: sc }}>{side.toUpperCase()}</span>
                   </div>
                   <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 14, color: txtMid, lineHeight: 1.6, wordBreak: 'break-word' }}>{roast}</div>
                 </div>
@@ -482,7 +482,7 @@ function CardContent({ conflict, dark = false, onIntel }) {
         <button onClick={() => onIntel && onIntel(conflict.id)} style={{
           flex: 1, padding: '14px', background: surfaceC,
           border: `1px solid ${cfg.color}40`, borderRadius: 4,
-          fontFamily: "'Bebas Neue',sans-serif", fontSize: 16,
+          fontFamily: "'Barlow Condensed',sans-serif", fontSize: 16,
           letterSpacing: '0.12em', color: cfg.color, cursor: 'pointer',
         }}>🔍 RAW INTEL</button>
       </div>
@@ -533,7 +533,7 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
         position: 'absolute', top: 16, left: toggleLeft,
         zIndex: 600, background: C.surface,
         border: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        color: C.ink, fontFamily: "'Bebas Neue',sans-serif",
+        color: C.ink, fontFamily: "'Barlow Condensed',sans-serif",
         fontSize: mobile ? 15 : 14, letterSpacing: '0.12em',
         padding: mobile ? '10px 18px' : '8px 14px',
         cursor: 'pointer', borderRadius: 4,
@@ -553,14 +553,14 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: '0.2em', color: C.ink }}>CHAOSDESK</div>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 28, letterSpacing: '0.2em', color: C.ink }}>CHAOSDESK</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 11, letterSpacing: '0.1em', color: C.accent }}>{conflicts?.length || 0} ΕΝΕΡΓΕΣ ΣΥΓΚΡΟΥΣΕΙΣ</div>
+            <div style={{ fontFamily: "'Roboto Mono',monospace", fontSize: 11, letterSpacing: '0.1em', color: C.accent }}>{conflicts?.length || 0} ΕΝΕΡΓΕΣ ΣΥΓΚΡΟΥΣΕΙΣ</div>
             {/* TODO: language toggle — refetch /api/conflicts?lang=el|en */}
             <div style={{ display: 'inline-flex', gap: 4 }}>
               {['ΕΛ', 'EN'].map((lng, i) => (
                 <button key={lng} style={{
-                  fontFamily: "'Share Tech Mono',monospace", fontSize: 10,
+                  fontFamily: "'Roboto Mono',monospace", fontSize: 10,
                   padding: '2px 8px', border: `1px solid ${i === 0 ? C.accent : C.border}`,
                   color: i === 0 ? C.accent : C.inkFaint,
                   background: 'transparent', cursor: 'pointer', borderRadius: 2,
@@ -568,7 +568,7 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
               ))}
             </div>
           </div>
-          {vibeCheck && <div style={{ fontFamily: "'VT323',monospace", fontSize: 14, color: C.inkLight, marginTop: 6, lineHeight: 1.4 }}>{vibeCheck}</div>}
+          {vibeCheck && <div style={{ fontFamily: "'Courier Prime',monospace", fontSize: 14, color: C.inkLight, marginTop: 6, lineHeight: 1.4 }}>{vibeCheck}</div>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {conflicts?.map((c) => {
@@ -582,18 +582,18 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
                 borderBottom: `1px solid ${C.border}`,
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 9, color: C.inkFaint }}>{c.id?.toUpperCase()}</span>
-                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 10, color: icfg.color, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontFamily: "'Roboto Mono',monospace", fontSize: 9, color: C.inkFaint }}>{c.id?.toUpperCase()}</span>
+                  <span style={{ fontFamily: "'Roboto Mono',monospace", fontSize: 10, color: icfg.color, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: icfg.color }} />{icfg.label}
                   </span>
                 </div>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{c.name}</div>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{c.name}</div>
                 <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: C.inkLight, marginTop: 2 }}>{c.region}</div>
               </div>
             );
           })}
         </div>
-        <div style={{ padding: '10px 20px', borderTop: `1px solid ${C.border}`, fontFamily: "'Share Tech Mono',monospace", fontSize: 9, color: C.inkFaint, display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '10px 20px', borderTop: `1px solid ${C.border}`, fontFamily: "'Roboto Mono',monospace", fontSize: 9, color: C.inkFaint, display: 'flex', justifyContent: 'space-between', flexShrink: 0 }}>
           <span>SONAR-PRO</span><span style={{ color: C.accent }}>● LIVE</span>
         </div>
       </div>
@@ -704,7 +704,7 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
       dot.style.cssText = `position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${col};border:2.5px solid ${C.surface};box-shadow:0 0 ${size*1.5}px ${col}50,0 2px 8px rgba(0,0,0,0.3);transform:translate(-50%,-50%);transition:transform .2s;`;
       wrapper.appendChild(ring1); wrapper.appendChild(ring2); wrapper.appendChild(dot);
       const tooltip = document.createElement('div');
-      tooltip.style.cssText = `position:absolute;left:0;transform:translate(-50%,calc(-${Math.ceil(size/2)}px - 100% - 6px));background:${C.surface};border:1px solid ${col}66;padding:4px 10px;white-space:nowrap;font-family:'Bebas Neue',sans-serif;font-size:14px;color:${col};letter-spacing:0.1em;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.15);border-radius:3px;`;
+      tooltip.style.cssText = `position:absolute;left:0;transform:translate(-50%,calc(-${Math.ceil(size/2)}px - 100% - 6px));background:${C.surface};border:1px solid ${col}66;padding:4px 10px;white-space:nowrap;font-family:'Barlow Condensed',sans-serif;font-size:14px;color:${col};letter-spacing:0.1em;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.15);border-radius:3px;`;
       tooltip.textContent = c.meme_title || c.name;
       wrapper.appendChild(tooltip);
       wrapper.addEventListener('mouseenter', () => { dot.style.transform = 'translate(-50%,-50%) scale(1.3)'; tooltip.style.opacity = '1'; });
@@ -733,7 +733,7 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
         position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 20px',
         background: `linear-gradient(0deg, ${C.bg}ee, transparent)`,
         display: 'flex', justifyContent: 'center', gap: 20,
-        fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: C.inkLight, zIndex: 50,
+        fontFamily: "'Roboto Mono',monospace", fontSize: 11, color: C.inkLight, zIndex: 50,
       }}>
         {mobile ? (
           <span><span style={{ color: C.accent }}>●</span> {conflicts?.length || 0} CONFLICTS · LIVE</span>
@@ -753,5 +753,5 @@ export default function MapView({ conflicts, vibeCheck, onIntel }) {
 function TimeStamp() {
   const [t, setT] = useState('');
   useEffect(() => { const tick = () => setT(new Date().toISOString().replace('T', '  ').slice(0, 21) + ' UTC'); tick(); const i = setInterval(tick, 1000); return () => clearInterval(i); }, []);
-  return <div style={{ position: 'absolute', top: 16, right: 20, zIndex: 600, fontFamily: "'Share Tech Mono',monospace", fontSize: 11, color: C.inkFaint, background: `${C.surface}cc`, padding: '6px 14px', border: `1px solid ${C.border}`, borderRadius: 3 }}>{t}</div>;
+  return <div style={{ position: 'absolute', top: 16, right: 20, zIndex: 600, fontFamily: "'Roboto Mono',monospace", fontSize: 11, color: C.inkFaint, background: `${C.surface}cc`, padding: '6px 14px', border: `1px solid ${C.border}`, borderRadius: 3 }}>{t}</div>;
 }
