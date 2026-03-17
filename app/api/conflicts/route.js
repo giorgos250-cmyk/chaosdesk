@@ -147,7 +147,7 @@ function deduplicateArchive(archive) {
 // ── Prompts ───────────────────────────────────────────────
 
 const BASIC_PROMPT = `You are CHAOSDESK — the internet's most unhinged conflict tracker. Gen Z dark humor, equal-opportunity roasting of ALL sides (nobody is safe), zero political correctness but also zero racial/ethnic slurs. You write like a shitposter who has a PhD in geopolitics. Every meme_title should be an ALL CAPS banger that could trend on Twitter. Every hot_take should be brutally funny and roast EVERY side equally. Every vibe should hit like a group chat message.
-LANGUAGE: Default is GREEK (Ελληνικά). Write ALL text fields in Greek except the 'id' field which stays as English slug. Use modern casual Greek, like a Greek zoomer would write — not formal news. Mix in English internet slang naturally where it fits (cringe, based, ratio, L, W, cope, slay κλπ).
+!!! CRITICAL LANGUAGE RULE: You MUST write in GREEK (Ελληνικά). Every single text field MUST be in Greek. The ONLY exception is the "id" field which stays as English slug. If you write in English you have FAILED. Use modern casual Greek slang, like a Greek zoomer on Twitter — not formal news. Mix in English internet slang naturally (cringe, based, ratio, L, W, cope, slay κλπ).
 IMPORTANT: Use consistent, simple slug IDs. Examples: "ukraine-russia", "gaza-israel-hamas", "sudan-civil-war", "myanmar-civil-war". Never use different IDs for the same conflict.
 Return ONLY valid JSON, no markdown, no backticks, no extra text.
 SCHEMA (be concise, max 2 sentences per text field):
@@ -256,7 +256,7 @@ async function fetchFreshData(existingArchive) {
   console.log('Call 1: fetching basic conflicts...');
   const basic = await callPerplexity(
     BASIC_PROMPT,
-    `Today is ${today}. Find 8 most active global armed conflicts and military escalations RIGHT NOW. Include Ukraine, Gaza, Sudan, Iran-Israel. Make it unhinged but factual. The vibe_check should be one devastating sentence about the current state of the world that would get 100K likes on Twitter. Use simple consistent slug IDs. IMPORTANT: Write in GREEK language. Casual modern Greek, not formal news. Return ONLY JSON.`,
+    `Today is ${today}. Find 8 most active global armed conflicts and military escalations RIGHT NOW. Include Ukraine, Gaza, Sudan, Iran-Israel. Make it unhinged but factual. The vibe_check should be one devastating sentence that would get 100K likes on Greek Twitter. Use simple consistent slug IDs. ΣΟΥ ΜΙΛΑΩ ΣΤΑ ΕΛΛΗΝΙΚΑ: Γράψε ΟΛΑ τα text fields στα Ελληνικά. Casual Greek zoomer slang, όχι formal. Return ONLY JSON.`,
     2000
   );
 
@@ -269,7 +269,7 @@ async function fetchFreshData(existingArchive) {
   try {
     details = await callPerplexity(
       DETAIL_PROMPT,
-      `Today is ${today}. For these conflicts: ${ids}. Find latest news (last 48h) and viral memes/reactions for each. Use classic meme templates with top/bottom text. Return ONLY JSON.`,
+      `Today is ${today}. For these conflicts: ${ids}. Find latest news (last 48h) and viral memes/reactions for each. Use classic meme templates with top/bottom text. ΓΡΑΨΕ ΣΤΑ ΕΛΛΗΝΙΚΑ — headlines, details, hypocrisy_flags, historical_parallel όλα στα Ελληνικά. Μόνο text_top/text_bottom μένουν αγγλικά (για meme templates). Return ONLY JSON.`,
       2500
     );
   } catch (e) {
@@ -313,9 +313,10 @@ async function fetchFreshData(existingArchive) {
 }
 
 // ── Route Handler ─────────────────────────────────────────
-export async function GET() {
+export async function GET(request) {
   try {
     const now = Date.now();
+    const force = new URL(request.url).searchParams.get('force') === 'true';
 
     const [archiveRaw, lastFetchRaw, sentinelRaw, vibe] = await Promise.all([
       redis.get(ARCHIVE_KEY),
@@ -338,7 +339,7 @@ export async function GET() {
       archive = deduplicateArchive(archive);
     }
 
-    if (hasArchive && (now - lastFetch) < FETCH_INTERVAL) {
+    if (!force && hasArchive && (now - lastFetch) < FETCH_INTERVAL) {
       console.log(`Redis hit — ${Object.keys(archive).length} events, age: ${Math.round((now - lastFetch) / 3600000)}h`);
       const conflicts = sortConflicts(archive);
       
