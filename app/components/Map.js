@@ -31,10 +31,10 @@ const C = {
 };
 
 const INTENSITY = {
-  critical: { color: C.critical, label: 'CRITICAL', windowStyle: 'torn' },
-  high:     { color: C.high,     label: 'HIGH',     windowStyle: 'blackboard' },
-  medium:   { color: C.medium,   label: 'MEDIUM',   windowStyle: 'notebook' },
-  low:      { color: C.low,      label: 'LOW',      windowStyle: 'clipboard' },
+  critical: { color: C.critical, label: 'ΚΡΙΣΙΜΟ',  windowStyle: 'torn' },
+  high:     { color: C.high,     label: 'ΥΨΗΛΟ',    windowStyle: 'blackboard' },
+  medium:   { color: C.medium,   label: 'ΜΕΤΡΙΟ',   windowStyle: 'notebook' },
+  low:      { color: C.low,      label: 'ΧΑΜΗΛΟ',   windowStyle: 'clipboard' },
 };
 
 const STATUS = {
@@ -554,7 +554,20 @@ function IndexSidebar({ conflicts, vibeCheck, selectedId, onSelect, isOpen, onTo
       }}>
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: '0.2em', color: C.ink }}>CHAOSDESK</div>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 11, letterSpacing: '0.1em', color: C.accent, marginTop: 2 }}>{conflicts?.length || 0} ACTIVE CONFLICTS</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: 11, letterSpacing: '0.1em', color: C.accent }}>{conflicts?.length || 0} ΕΝΕΡΓΕΣ ΣΥΓΚΡΟΥΣΕΙΣ</div>
+            {/* TODO: language toggle — refetch /api/conflicts?lang=el|en */}
+            <div style={{ display: 'inline-flex', gap: 4 }}>
+              {['ΕΛ', 'EN'].map((lng, i) => (
+                <button key={lng} style={{
+                  fontFamily: "'Share Tech Mono',monospace", fontSize: 10,
+                  padding: '2px 8px', border: `1px solid ${i === 0 ? C.accent : C.border}`,
+                  color: i === 0 ? C.accent : C.inkFaint,
+                  background: 'transparent', cursor: 'pointer', borderRadius: 2,
+                }}>{lng}</button>
+              ))}
+            </div>
+          </div>
           {vibeCheck && <div style={{ fontFamily: "'VT323',monospace", fontSize: 14, color: C.inkLight, marginTop: 6, lineHeight: 1.4 }}>{vibeCheck}</div>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
