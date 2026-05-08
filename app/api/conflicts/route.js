@@ -2,7 +2,10 @@ export const runtime = 'nodejs';
 import { Redis } from '@upstash/redis';
 import { XMLParser } from 'fast-xml-parser';
 
-const redis = Redis.fromEnv();
+const redis = new Redis({
+  url: process.env.HANTA_KV_REST_API_URL,
+  token: process.env.HANTA_KV_REST_API_TOKEN,
+});
 const xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
 
 const KEYS = {
@@ -46,13 +49,22 @@ function stripTags(str) {
 }
 
 async function getCached(key) {
-  const raw = await redis.get(key);
-  if (!raw) return null;
-  try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { return null; }
+  try {
+    const raw = await redis.get(key);
+    if (!raw) return null;
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (e) {
+    console.warn(`Redis read failed [${key}]:`, e.message);
+    return null;
+  }
 }
 
 async function setCached(key, value, ttl) {
-  await redis.set(key, JSON.stringify(value), { ex: ttl });
+  try {
+    await redis.set(key, JSON.stringify(value), { ex: ttl });
+  } catch (e) {
+    console.warn(`Redis write failed [${key}]:`, e.message);
+  }
 }
 
 async function fetchRSS(url) {
@@ -117,7 +129,7 @@ async function fetchECDC() {
 // ── ProMED ────────────────────────────────────────────────────
 
 async function fetchProMED() {
-  const items = await fetchRSS('https://promedmail.org/feed/');
+  const items = await fetchRSS('https://www.promedmail.org/promed-rss/');
   const news = [];
 
   for (const item of items) {
@@ -211,7 +223,7 @@ async function fetchGoogleNews() {
 // ── WHO global stats panel ─────────────────────────────────────
 
 async function fetchWHO() {
-  const items = await fetchRSS('https://www.who.int/feeds/entity/csr/don/en/rss.xml');
+  const items = await fetchRSS('https://www.who.int/rss-feeds/news-english.xml');
   const alerts = [];
 
   for (const item of items) {
