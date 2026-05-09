@@ -344,26 +344,9 @@ export default function MapView() {
       if (cancelled) return;
       const map = new ml.Map({
         container: mapContainer.current,
-        style: {
-          version: 8,
-          sources: {
-            carto: {
-              type: 'raster',
-              tiles: [
-                'https://a.basemaps.cartocdn.com/dark_matter_all/{z}/{x}/{y}.png',
-                'https://b.basemaps.cartocdn.com/dark_matter_all/{z}/{x}/{y}.png',
-                'https://c.basemaps.cartocdn.com/dark_matter_all/{z}/{x}/{y}.png',
-                'https://d.basemaps.cartocdn.com/dark_matter_all/{z}/{x}/{y}.png',
-              ],
-              tileSize: 256,
-            },
-          },
-          layers: [{ id: 'carto-bg', type: 'raster', source: 'carto' }],
-        },
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
         center: [23.7, 38.0],
-        zoom: 6,
-        minZoom: 4,
-        maxZoom: 14,
+        zoom: 5.5,
         attributionControl: false,
       });
       mapRef.current = map;
@@ -381,22 +364,36 @@ export default function MapView() {
     const map = mapRef.current;
     const { confirmed, suspected, riskAreas } = data;
 
-    // Build GeoJSON
-    const casesGJ = {
-      type: 'FeatureCollection',
-      features: [
-        ...confirmed.map(c => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [c.location.lng, c.location.lat] },
-          properties: { kind: 'confirmed', severity: c.severity || 'medium', cases: c.cases || 0, w: 1.0 },
-        })),
-        ...suspected.map(c => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [c.location.lng, c.location.lat] },
-          properties: { kind: 'suspected', severity: c.severity || 'low', cases: c.cases || 0, w: 0.4 },
-        })),
-      ].filter(f => f.geometry.coordinates[0] != null && f.geometry.coordinates[1] != null),
-    };
+    const STATIC_RISK_POINTS = [
+      { lat: 39.5, lng: 22.0 },
+      { lat: 39.5, lng: 20.7 },
+      { lat: 40.3, lng: 21.8 },
+      { lat: 41.0, lng: 24.0 },
+      { lat: 37.5, lng: 22.3 },
+    ];
+
+    const caseFeatures = [
+      ...confirmed.map(c => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [c.location.lng, c.location.lat] },
+        properties: { type: 'confirmed', weight: 1.0 },
+      })),
+      ...suspected.map(c => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [c.location.lng, c.location.lat] },
+        properties: { type: 'suspected', weight: 0.4 },
+      })),
+      ...STATIC_RISK_POINTS.map(r => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [r.lng, r.lat] },
+        properties: { type: 'confirmed', weight: 0.6 },
+      })),
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [-25.0, 18.0] },
+        properties: { type: 'confirmed', weight: 0.8 },
+      },
+    ].filter(f => f.geometry.coordinates[0] != null && f.geometry.coordinates[1] != null);
 
     const riskGJ = {
       type: 'FeatureCollection',
@@ -408,7 +405,7 @@ export default function MapView() {
     };
 
     // Remove stale layers/sources
-    const layerIds = ['case-pins', 'case-pins-pulse', 'infection-heat', 'risk-fill'];
+    const layerIds = ['case-circles', 'infection-heat', 'risk-fill'];
     const srcIds   = ['cases', 'risk-areas'];
     layerIds.forEach(id => { try { if (map.getLayer(id)) map.removeLayer(id); } catch (_) {} });
     srcIds.forEach(id => { try { if (map.getSource(id)) map.removeSource(id); } catch (_) {} });
@@ -421,67 +418,59 @@ export default function MapView() {
     });
 
     // 2. Cases source
-    map.addSource('cases', { type: 'geojson', data: casesGJ });
+    map.addSource('cases', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: caseFeatures },
+    });
 
     // 3. Heatmap
     map.addLayer({
-      id: 'infection-heat', type: 'heatmap', source: 'cases',
+      id: 'infection-heat',
+      type: 'heatmap',
+      source: 'cases',
       paint: {
-        'heatmap-weight': ['get', 'w'],
-        'heatmap-intensity': 0.9,
+        'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 1, 1],
+        'heatmap-intensity': 1.5,
         'heatmap-color': [
           'interpolate', ['linear'], ['heatmap-density'],
           0,   'rgba(0,0,0,0)',
-          0.1, '#080000',
-          0.3, '#2a0000',
-          0.55,'#7a0000',
-          0.8, '#cc1010',
-          1.0, '#ff7700',
+          0.2, 'rgba(80,0,0,0.4)',
+          0.5, 'rgba(160,10,10,0.7)',
+          0.8, 'rgba(220,20,20,0.85)',
+          1,   'rgba(255,60,0,1)',
         ],
-        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 5, 40, 10, 80],
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 4, 30, 8, 80],
         'heatmap-opacity': 0.85,
       },
     });
 
-    // 4. Pulsing ring (animated via rAF)
+    // 4. Circle pins on top
     map.addLayer({
-      id: 'case-pins-pulse', type: 'circle', source: 'cases',
+      id: 'case-circles',
+      type: 'circle',
+      source: 'cases',
       paint: {
-        'circle-radius': 8,
-        'circle-color': 'rgba(0,0,0,0)',
-        'circle-stroke-width': 2,
-        'circle-stroke-color': ['match', ['get', 'kind'], 'confirmed', RED, ORANGE],
-        'circle-stroke-opacity': 0.9,
-      },
-    });
-
-    // 5. Solid pins
-    map.addLayer({
-      id: 'case-pins', type: 'circle', source: 'cases',
-      paint: {
-        'circle-radius': ['match', ['get', 'kind'], 'confirmed', 8, 6],
-        'circle-color':  ['match', ['get', 'kind'], 'confirmed', RED, ORANGE],
-        'circle-stroke-width': ['match', ['get', 'kind'], 'confirmed', 2, 1.5],
+        'circle-radius': ['case', ['==', ['get', 'type'], 'confirmed'], 9, 6],
+        'circle-color': ['case', ['==', ['get', 'type'], 'confirmed'], '#ff2020', '#ff6a00'],
         'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 2,
+        'circle-opacity': 0.95,
       },
     });
 
-    // Animation loop
+    // Animation: sine-wave heatmap intensity (Plague Inc spread effect)
     if (animRef.current) cancelAnimationFrame(animRef.current);
-    const t0 = performance.now();
-    function frame(now) {
-      const t = (now - t0) / 1000;
-      // Heatmap pulse: 0.6 → 1.2 over 3s
-      try { map.setPaintProperty('infection-heat', 'heatmap-intensity', 0.9 + 0.3 * Math.sin((t / 3) * 2 * Math.PI)); } catch (_) {}
-      // Ring pulse: radius 8→20, opacity 1→0 over 2s cycle
-      const phase = (t % 2) / 2;
-      try {
-        map.setPaintProperty('case-pins-pulse', 'circle-radius', 8 + 12 * phase);
-        map.setPaintProperty('case-pins-pulse', 'circle-stroke-opacity', 1 - phase);
-      } catch (_) {}
-      animRef.current = requestAnimationFrame(frame);
+    let start = null;
+    function animateHeat(ts) {
+      if (!start) start = ts;
+      const t = (ts - start) / 3000;
+      const intensity = 1.2 + Math.sin(t * Math.PI * 2) * 0.5;
+      if (map.getLayer('infection-heat')) {
+        map.setPaintProperty('infection-heat', 'heatmap-intensity', intensity);
+      }
+      animRef.current = requestAnimationFrame(animateHeat);
     }
-    animRef.current = requestAnimationFrame(frame);
+    animRef.current = requestAnimationFrame(animateHeat);
   }, [data, mapLoaded]);
 
   return (
