@@ -18,7 +18,7 @@ const KEYS = {
 const TTL = {
   confirmed: 86400,
   suspected: 21600,
-  news: 21600,
+  news: 900,
   global: 86400,
 };
 
@@ -220,6 +220,75 @@ async function fetchGoogleNews() {
   return news;
 }
 
+// ── GDELT ─────────────────────────────────────────────────────
+
+const GDELT_BASE = 'https://api.gdeltproject.org/api/v2/doc/doc';
+
+async function fetchGDELT() {
+  // OR terms must be wrapped in () per GDELT API requirements
+  const queries = [
+    {
+      // GR/CY focused: hantavirus (Greece OR Cyprus OR Ελλάδα)
+      url: `${GDELT_BASE}?query=hantavirus%20%28Greece%20OR%20Cyprus%20OR%20%CE%95%CE%BB%CE%BB%CE%AC%CE%B4%CE%B1%29&mode=artlist&maxrecords=25&format=json&timespan=6h`,
+      tag: 'local',
+    },
+    {
+      // Global cruise-ship / outbreak context: hantavirus (outbreak OR cruise)
+      url: `${GDELT_BASE}?query=hantavirus%20%28outbreak%20OR%20cruise%29&mode=artlist&maxrecords=25&format=json&timespan=6h`,
+      tag: 'global',
+    },
+  ];
+
+  const news = [];
+  const seen = new Set();
+
+  for (const q of queries) {
+    try {
+      const r = await fetch(q.url, {
+        headers: { 'User-Agent': 'HantaMap/1.0 hantavirus-surveillance-GR-CY' },
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const json = await r.json();
+      const articles = json.articles || [];
+
+      for (const art of articles) {
+        const url = art.url || '';
+        if (!url || seen.has(url)) continue;
+        seen.add(url);
+
+        const sc = (art.sourcecountry || '').toUpperCase();
+        const isGR = sc === 'GREECE' || sc === 'GR';
+        const isCY = sc === 'CYPRUS' || sc === 'CY';
+
+        news.push({
+          id: makeId('gdelt', url.slice(-40)),
+          type: 'news',
+          location: {
+            country: isCY ? 'Cyprus' : isGR ? 'Greece' : (art.sourcecountry || null),
+            region: null,
+            prefecture: null,
+            lat: isCY ? 35.1 : isGR ? 39.0 : null,
+            lng: isCY ? 33.4 : isGR ? 22.0 : null,
+          },
+          cases: null,
+          deaths: null,
+          hospitalized: null,
+          date_reported: art.seendate || null,
+          source: 'GDELT',
+          source_url: url,
+          description: (art.title || '').slice(0, 300) || null,
+          severity: null,
+          virus_strain: null,
+        });
+      }
+    } catch (e) {
+      console.warn(`GDELT (${q.tag}) failed:`, e.message);
+    }
+  }
+
+  return news;
+}
+
 // ── WHO global stats panel ─────────────────────────────────────
 
 async function fetchWHO() {
@@ -267,7 +336,7 @@ export async function GET(request) {
     if (!needsEcdc && !needsNews && !needsWho) {
       return Response.json(
         { confirmed: cachedConfirmed, suspected: cachedSuspected, news: cachedNews, globalStats: cachedGlobal, riskAreas: RISK_AREAS },
-        { headers: { 'Cache-Control': 's-maxage=21600, stale-while-revalidate=3600' } }
+        { headers: { 'Cache-Control': 's-maxage=900, stale-while-revalidate=300' } }
       );
     }
 
@@ -291,7 +360,7 @@ export async function GET(request) {
 
     if (needsNews) {
       tasks.push(
-        Promise.allSettled([fetchProMED(), fetchGoogleNews()])
+        Promise.allSettled([fetchGDELT(), fetchProMED(), fetchGoogleNews()])
           .then(results => {
             const fresh = [];
             for (const r of results) {
